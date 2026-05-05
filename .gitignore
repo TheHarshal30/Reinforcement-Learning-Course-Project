@@ -1,0 +1,7 @@
+.codex/
+.venv/
+.venv_check/
+__pycache__/
+*.pyc
+caveman/
+
