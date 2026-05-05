@@ -194,13 +194,17 @@ def evaluate_policy(policy, scenario: ScenarioConfig, env_cfg: EnvConfig, episod
     return aggregated
 
 
-def run_experiments(output_dir: str = "artifacts"):
+def run_experiments(
+    output_dir: str = "artifacts",
+    env_cfg: EnvConfig | None = None,
+    ppo_cfg: PPOConfig | None = None,
+):
     output_path = Path(output_dir)
     ensure_dir(output_path)
     plots_dir = ensure_dir(output_path / "plots")
 
-    env_cfg = EnvConfig()
-    ppo_cfg = PPOConfig()
+    env_cfg = env_cfg or EnvConfig()
+    ppo_cfg = ppo_cfg or PPOConfig()
 
     agent, training_history = train_ppo(env_cfg, ppo_cfg)
     write_json(output_path / "training_history.json", training_history)
