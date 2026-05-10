@@ -16,8 +16,9 @@ Standalone simulator + PPO training pipeline for adaptive API rate limiting.
 ```bash
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
-# On GPU server, also install PyTorch for the local CUDA build you use.
-# Example: pip install torch --index-url https://download.pytorch.org/whl/cu121
+# Install PyTorch for your local accelerator/runtime.
+# Apple Silicon example: pip install torch
+# NVIDIA CUDA example: pip install torch --index-url https://download.pytorch.org/whl/cu121
 .venv/bin/python run_experiments.py
 ```
 
@@ -33,5 +34,4 @@ python -m venv .venv
 - PPO uses only the simulator environment.
 - Retry traffic is buffered across timesteps and rescheduled after delayed drops.
 - Service is priority-aware: higher priority requests are processed first when the queue builds.
-- `PPOConfig.device = "auto"` uses CUDA when available, else CPU.
-
+- `PPOConfig.device = "auto"` uses CUDA when available, else Apple `mps` when available, else CPU.

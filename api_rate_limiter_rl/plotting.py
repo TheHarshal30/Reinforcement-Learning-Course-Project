@@ -11,28 +11,29 @@ import matplotlib.pyplot as plt
 
 def plot_training_curves(history: Dict[str, List[float]], output_dir: Path):
     output_dir.mkdir(parents=True, exist_ok=True)
+    metrics = [
+        ("episode_reward", "Episode Reward", "#0B6E4F"),
+        ("episode_latency", "Average Latency", "#C75146"),
+        ("episode_throughput", "Throughput", "#1F77B4"),
+        ("episode_drop_rate", "Drop Rate", "#8E5C2A"),
+    ]
+    if "episode_served_cost" in history:
+        metrics.append(("episode_served_cost", "Processed Cost", "#6C5CE7"))
+    if "episode_budget_utilization" in history:
+        metrics.append(("episode_budget_utilization", "Budget Utilization", "#FF7F11"))
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    ncols = 2
+    nrows = (len(metrics) + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(12, 4 * nrows))
     axes = axes.ravel()
-
-    axes[0].plot(history["episode_reward"], color="#0B6E4F", linewidth=1.5)
-    axes[0].set_title("Episode Reward")
-    axes[0].set_xlabel("Episode")
-
-    axes[1].plot(history["episode_latency"], color="#C75146", linewidth=1.5)
-    axes[1].set_title("Average Latency")
-    axes[1].set_xlabel("Episode")
-
-    axes[2].plot(history["episode_throughput"], color="#1F77B4", linewidth=1.5)
-    axes[2].set_title("Throughput")
-    axes[2].set_xlabel("Episode")
-
-    axes[3].plot(history["episode_drop_rate"], color="#8E5C2A", linewidth=1.5)
-    axes[3].set_title("Drop Rate")
-    axes[3].set_xlabel("Episode")
-
-    for ax in axes:
+    for ax, (key, title, color) in zip(axes, metrics):
+        ax.plot(history[key], color=color, linewidth=1.5)
+        ax.set_title(title)
+        ax.set_xlabel("Episode")
         ax.grid(True, alpha=0.25)
+
+    for ax in axes[len(metrics) :]:
+        ax.axis("off")
 
     fig.tight_layout()
     fig.savefig(output_dir / "training_curves.png", dpi=160)
@@ -56,4 +57,3 @@ def plot_comparison(results: Dict[str, Dict[str, float]], metric: str, output_di
     fig.savefig(output_dir / f"{metric}.png", dpi=160)
     fig.savefig(output_dir / f"{metric}.svg")
     plt.close(fig)
-

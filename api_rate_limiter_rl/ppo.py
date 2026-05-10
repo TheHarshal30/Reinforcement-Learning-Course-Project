@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Sequence
 
 import numpy as np
@@ -31,6 +33,16 @@ class RolloutBatch:
 
 
 if torch is not None:
+
+    def _resolve_torch_device(device: str | None):
+        if device:
+            return torch.device(device)
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+        mps_backend = getattr(torch.backends, "mps", None)
+        if mps_backend is not None and torch.backends.mps.is_available():
+            return torch.device("mps")
+        return torch.device("cpu")
 
     class ActorCriticNet(nn.Module):
         def __init__(self, state_dim: int, hidden_dim: int, action_dim: int):
@@ -72,7 +84,7 @@ if torch is not None:
             self.lam = lam
             self.update_epochs = update_epochs
             self.minibatch_size = minibatch_size
-            self.device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+            self.device = _resolve_torch_device(device)
             np.random.seed(seed)
             torch.manual_seed(seed)
             if torch.cuda.is_available():
@@ -158,6 +170,31 @@ if torch is not None:
                 returns=np.asarray(returns, dtype=float),
                 advantages=np.asarray(advantages, dtype=float),
                 values=np.asarray(values, dtype=float),
+            )
+
+        def checkpoint(self):
+            return {
+                "model": copy.deepcopy(self.model.state_dict()),
+                "optimizer": copy.deepcopy(self.optimizer.state_dict()),
+            }
+
+        def restore(self, checkpoint):
+            self.model.load_state_dict(checkpoint["model"])
+            self.optimizer.load_state_dict(checkpoint["optimizer"])
+
+        def set_learning_rates(self, actor_lr: float, critic_lr: float):
+            self.optimizer.param_groups[0]["lr"] = critic_lr
+            self.optimizer.param_groups[1]["lr"] = actor_lr
+            self.optimizer.param_groups[2]["lr"] = critic_lr
+
+        def save(self, path: str | Path):
+            torch.save(
+                {
+                    "state_dim": self.state_dim,
+                    "action_dim": self.action_dim,
+                    "checkpoint": self.checkpoint(),
+                },
+                path,
             )
 
 else:
