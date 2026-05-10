@@ -143,6 +143,8 @@ def train_ppo(
     agent: PPOAgent | None = None,
     scenario_factory=None,
     validation_scenario: ScenarioConfig | None = None,
+    behavior_clone_dataset=None,
+    behavior_clone_weight: float = 0.0,
 ):
     rng = random.Random(ppo_cfg.seed)
     training_history = {
@@ -208,7 +210,11 @@ def train_ppo(
             rollout["dones"],
             last_value=0.0,
         )
-        agent.update(batch)
+        agent.update(
+            batch,
+            behavior_batch=behavior_clone_dataset,
+            behavior_weight=behavior_clone_weight,
+        )
 
         summary = summarize_episode(rollout["infos"])
         training_history["episode_reward"].append(summary["reward"])

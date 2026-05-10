@@ -17,6 +17,8 @@ cost_aware_final/
 cost_reward_smoke/
 cost_reward_screen/
 cost_aware_finetune_run/
+azure_trace_artifacts/raw/
+azure_trace_artifacts/extracted/
 report.pdf
 *.html
 *.htm

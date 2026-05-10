@@ -128,13 +128,18 @@ if torch is not None:
             for start in range(0, size, self.minibatch_size):
                 yield indices[start : start + self.minibatch_size]
 
-        def update(self, batch: RolloutBatch):
+        def update(self, batch: RolloutBatch, behavior_batch=None, behavior_weight: float = 0.0):
             states = torch.tensor(batch.states, dtype=torch.float32, device=self.device)
             actions = torch.tensor(batch.actions, dtype=torch.int64, device=self.device)
             old_logp = torch.tensor(batch.old_logp, dtype=torch.float32, device=self.device)
             returns = torch.tensor(batch.returns, dtype=torch.float32, device=self.device)
             advantages = torch.tensor(batch.advantages, dtype=torch.float32, device=self.device)
             advantages = (advantages - advantages.mean()) / (advantages.std(unbiased=False) + 1e-8)
+            bc_states = None
+            bc_actions = None
+            if behavior_batch is not None and behavior_weight > 0.0:
+                bc_states = torch.tensor(behavior_batch["states"], dtype=torch.float32, device=self.device)
+                bc_actions = torch.tensor(behavior_batch["actions"], dtype=torch.int64, device=self.device)
 
             for _ in range(self.update_epochs):
                 for mb_idx in self._iterate_minibatches(len(states)):
@@ -154,7 +159,14 @@ if torch is not None:
                     actor_loss = -torch.mean(torch.min(unclipped, clipped))
                     critic_loss = F.mse_loss(values, mb_returns)
                     entropy_bonus = dist.entropy().mean()
-                    loss = actor_loss + 0.5 * critic_loss - 0.01 * entropy_bonus
+                    behavior_bonus = torch.tensor(0.0, device=self.device)
+                    if bc_states is not None and bc_actions is not None:
+                        sample_size = min(len(mb_idx), len(bc_states))
+                        bc_idx = torch.randint(0, len(bc_states), (sample_size,), device=self.device)
+                        bc_logits, _ = self.model(bc_states[bc_idx])
+                        bc_dist = Categorical(logits=bc_logits)
+                        behavior_bonus = bc_dist.log_prob(bc_actions[bc_idx]).mean()
+                    loss = actor_loss + 0.5 * critic_loss - 0.01 * entropy_bonus - behavior_weight * behavior_bonus
 
                     self.optimizer.zero_grad(set_to_none=True)
                     loss.backward()
@@ -196,6 +208,10 @@ if torch is not None:
                 },
                 path,
             )
+
+        def load(self, path: str | Path):
+            payload = torch.load(path, map_location=self.device)
+            self.restore(payload["checkpoint"])
 
 else:
 

@@ -82,6 +82,13 @@ class RateLimitEnv:
         return list(retry_requests)
 
     def _sample_request_cost(self, priority: int) -> float:
+        if (
+            self.config.use_azure_cost
+            and self.config.azure_cost_values
+            and self.config.azure_cost_probabilities
+        ):
+            idx = sample_categorical(self.config.azure_cost_probabilities, self.rng)
+            return float(self.config.azure_cost_values[idx])
         low, high = self.scenario.cost_ranges_by_priority[priority]
         return self.rng.uniform(low, high)
 

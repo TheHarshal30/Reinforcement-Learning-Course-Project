@@ -219,6 +219,9 @@ The successful fix was to replace request-count throughput with processed cost a
 \paragraph{Fine-tuning.}
 A final targeted fine-tuning stage specialized the cost-aware PPO on the \texttt{high\_load} scenario for $30$ additional episodes at slightly higher learning rates. The result gave a modest in-distribution gain but did not close the gap to the strongest heuristics and slightly hurt out-of-distribution robustness.
 
+\paragraph{Warm-start from heuristics.}
+The final extension explored imitation-based warm-starting. A strong cost-aware heuristic (\texttt{cost\_aware\_priority}) was used as a teacher to generate demonstration trajectories across the standard training scenarios. The PPO actor-critic network was then pre-trained with behavioral cloning (cross-entropy for actions, mean squared error for critic targets using Monte Carlo returns). Direct PPO fine-tuning from this cloned checkpoint was unstable and destroyed the cloned policy, so a behavior-regularized PPO variant was implemented. During PPO updates, the actor received an additional teacher-action log-probability bonus with weight $\lambda$, anchoring the policy to the safe behavioral region discovered by cloning.
+
 \subsection{Evaluation Methodology}
 Performance was measured with:
 \begin{itemize}[leftmargin=1.5em]
@@ -237,6 +240,8 @@ In addition to the standard four traffic scenarios, three cost-shift out-of-dist
     \item \textbf{expensive\_attack}: highly costly high-priority requests,
     \item \textbf{mixed\_shift}: all classes experience unseen cost distributions.
 \end{itemize}
+
+A final transfer test used a production-derived cost distribution from the public Azure Functions Invocation Trace 2021. A $500{,}000$-row sample of invocation durations was extracted from the official two-week trace, fitted with a log-normal model for inspection, then scaled into the simulator's integer cost space so that the median duration mapped to cost $3$. The resulting empirical distribution was clipped to the range $[1,15]$ and used as a direct replacement for the synthetic $\mathcal{U}(1,5)$ request-cost sampler. This gave a zero-shot robustness test for policies trained entirely on synthetic costs.
 
 Because the environment is simulation-heavy and the model is small, the project used an efficient screening protocol on CPU rather than long MPS/GPU runs. Short screening runs, validation checkpoints, and early stopping were used to prune bad reward settings before running full experiments.\footnote{One intermediate comparison was invalidated because a global reward default was accidentally changed, causing the baseline and variant to share the same throughput weight. That contaminated result was discarded and rerun with isolated configuration overrides. This is noted explicitly because reproducibility mattered throughout the project.}
 
@@ -560,21 +565,124 @@ Setting & Scenario & Reward & Throughput & Latency & Drop Rate & HP Success \\
 
 The specialization improved the in-distribution target slightly, but it did not beat the best heuristic on \texttt{high\_load}, and it noticeably degraded robustness to the expensive OOD attack. This suggests that the main limitation is not just under-training but a deeper mismatch between the learned policy and the unseen cost distribution.
 
+\subsection{Warm-Started PPO from Heuristic Demonstrations}
+The final novelty experiment asked whether PPO could be safely warm-started from a strong heuristic and then improved with reinforcement learning. A demonstration dataset of $54{,}000$ state-action pairs was collected from the \texttt{cost\_aware\_priority} heuristic across the standard traffic scenarios. Behavioral cloning produced a teacher-like policy with validation accuracy around $0.53$, which was sufficient to nearly match the heuristic on some scenarios.
+
+However, naive PPO fine-tuning from the cloned checkpoint collapsed. The learned policy drifted away from the teacher and converged to a poor high-latency regime. To prevent this, a behavior-regularized PPO objective was introduced. The PPO actor update was augmented with a teacher-action anchoring term:
+\begin{equation}
+\mathcal{L}_{\text{reg}} = \mathcal{L}_{\text{PPO}} - \lambda \, \mathbb{E}\left[\log \pi_\theta(a^{\text{teacher}} \mid s)\right].
+\end{equation}
+This term encourages the policy to stay close to the safe teacher behavior while still optimizing reward.
+
+Table~\ref{tab:warmstart} shows the final result for the full $\lambda=0.1$ run, which was the best stable setting. The cloned policy already transferred much of the heuristic behavior. Behavior-regularized fine-tuning prevented catastrophic collapse and improved the cloned policy on bursty, oscillating, and low-load scenarios, although it still did not surpass the teacher overall.
+
+\begin{table}[H]
+\centering
+\caption{Warm-started PPO from heuristic demonstrations. Behavioral cloning successfully transfers teacher behavior; behavior-regularized PPO with $\lambda=0.1$ prevents collapse and gives modest gains over the cloned policy, but still trails the teacher on the main stress scenarios.}
+\label{tab:warmstart}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{llccccc}
+\toprule
+Scenario & Policy & Reward & Throughput & Latency & Drop Rate & HP Success \\
+\midrule
+\multirow{3}{*}{high\_load}
+& Teacher: CostAwarePriority & $120.169$ & $7.687$ & $2.067$ & $0.484$ & $0.892$ \\
+& PPO-Cloned & $108.240$ & $7.326$ & $1.583$ & $0.516$ & $0.897$ \\
+& PPO-Regularized ($\lambda=0.1$) & $105.752$ & $7.232$ & $1.521$ & $0.520$ & $0.893$ \\
+\midrule
+\multirow{3}{*}{bursty}
+& Teacher: CostAwarePriority & $162.773$ & $7.139$ & $1.483$ & $0.242$ & $0.765$ \\
+& PPO-Cloned & $142.419$ & $7.376$ & $2.477$ & $0.273$ & $0.750$ \\
+& PPO-Regularized ($\lambda=0.1$) & $152.224$ & $7.716$ & $2.994$ & $0.217$ & $0.741$ \\
+\midrule
+\multirow{3}{*}{oscillating}
+& Teacher: CostAwarePriority & $165.515$ & $7.564$ & $1.709$ & $0.283$ & $0.800$ \\
+& PPO-Cloned & $160.913$ & $7.459$ & $1.651$ & $0.288$ & $0.795$ \\
+& PPO-Regularized ($\lambda=0.1$) & $162.030$ & $7.623$ & $2.073$ & $0.273$ & $0.802$ \\
+\midrule
+\multirow{3}{*}{low\_load}
+& Teacher: CostAwarePriority & $127.468$ & $4.354$ & $1.013$ & $0.012$ & $0.488$ \\
+& PPO-Cloned & $129.053$ & $4.398$ & $1.015$ & $0.010$ & $0.481$ \\
+& PPO-Regularized ($\lambda=0.1$) & $131.856$ & $4.447$ & $1.018$ & $0.001$ & $0.491$ \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+Two additional quick screens tested stronger anchors, $\lambda=0.15$ and $\lambda=0.2$. Neither improved the target \texttt{high\_load} scenario, and both performed worse than the full $\lambda=0.1$ run. This suggests that moderate regularization is necessary: too weak an anchor allows destructive drift, but too strong an anchor over-constrains learning and prevents useful adaptation.
+
+\subsection{Azure-Calibrated Cost Transfer}
+The final transfer-learning experiment replaced the synthetic request-cost distribution with one derived from the public Azure Functions Invocation Trace 2021. The trace contains approximately $1.81$ million invocation records. A random sample of $500{,}000$ durations was used to estimate the cost profile. The median duration was $0.046$ seconds and the empirical $95$th percentile was $18.845$ seconds. After scaling the median to simulator cost $3$ and clipping at cost $15$, the resulting PMF was highly bimodal, with $40.9\%$ mass at cost $1$ and $34.7\%$ mass at the clip ceiling $15$. This makes the Azure-calibrated evaluation meaningfully harsher than the original $\mathcal{U}(1,5)$ training distribution.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{azure_duration_histogram_fit.png}
+\caption{Histogram of sampled Azure Functions invocation durations with a fitted log-normal density overlay. The raw duration distribution is extremely heavy-tailed, motivating the separate Azure-calibrated transfer test for cost-aware policies.}
+\label{fig:azure_duration_hist}
+\end{figure}
+
+Two previously trained agents were evaluated without retraining: the base cost-aware \texttt{PPO-CostOnly} policy and the behavior-regularized warm-started PPO with $\lambda=0.1$. They were compared against the two strongest heuristics under the same Azure-derived PMF. Table~\ref{tab:azure_transfer} shows that the warm-started PPO transferred better than the plain cost-only PPO on all four standard scenarios. It achieved the best reward on \texttt{high\_load} and \texttt{oscillating}, while heuristics remained stronger on \texttt{low\_load} and \texttt{bursty}. This is a useful positive result: even though the learned policies were trained on a synthetic uniform distribution, behavior-regularized warm-starting improved robustness to a production-derived cost shift.
+
+\begin{table}[H]
+\centering
+\caption{Zero-shot transfer under Azure-calibrated request costs. All policies were trained without Azure data and then evaluated under the empirical PMF derived from the Azure Functions trace. The regularized warm-start PPO transfers better than the plain cost-only PPO, especially on \texttt{high\_load} and \texttt{oscillating}.}
+\label{tab:azure_transfer}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{llcccccc}
+\toprule
+Scenario & Policy & Reward & Throughput & Latency & Drop Rate & HP Success & Budget Util. \\
+\midrule
+\multirow{4}{*}{low\_load}
+& PPO-CostOnly & $16.886$ & $2.796$ & $7.397$ & $0.303$ & $0.496$ & $0.779$ \\
+& PPO-WarmStart-Reg ($\lambda=0.1$) & $22.214$ & $2.828$ & $7.186$ & $0.299$ & $0.505$ & $0.784$ \\
+& CostAwarePriority & $66.880$ & $2.769$ & $4.355$ & $0.304$ & $0.518$ & $0.775$ \\
+& PriorityHeuristic & $49.490$ & $2.801$ & $5.586$ & $0.289$ & $0.503$ & $0.780$ \\
+\midrule
+\multirow{4}{*}{high\_load}
+& PPO-CostOnly & $-208.662$ & $2.926$ & $7.787$ & $0.806$ & $0.839$ & $0.797$ \\
+& PPO-WarmStart-Reg ($\lambda=0.1$) & $-90.955$ & $2.729$ & $4.612$ & $0.828$ & $0.811$ & $0.773$ \\
+& CostAwarePriority & $-118.822$ & $2.910$ & $5.477$ & $0.807$ & $0.857$ & $0.795$ \\
+& PriorityHeuristic & $-104.532$ & $2.872$ & $5.830$ & $0.815$ & $0.850$ & $0.788$ \\
+\midrule
+\multirow{4}{*}{bursty}
+& PPO-CostOnly & $-124.311$ & $2.865$ & $6.890$ & $0.693$ & $0.731$ & $0.795$ \\
+& PPO-WarmStart-Reg ($\lambda=0.1$) & $-62.056$ & $2.784$ & $5.463$ & $0.696$ & $0.721$ & $0.780$ \\
+& CostAwarePriority & $-78.989$ & $2.985$ & $5.372$ & $0.670$ & $0.774$ & $0.802$ \\
+& PriorityHeuristic & $-53.194$ & $2.903$ & $5.140$ & $0.681$ & $0.750$ & $0.792$ \\
+\midrule
+\multirow{4}{*}{oscillating}
+& PPO-CostOnly & $-112.369$ & $2.878$ & $6.125$ & $0.730$ & $0.794$ & $0.790$ \\
+& PPO-WarmStart-Reg ($\lambda=0.1$) & $-50.857$ & $2.736$ & $4.453$ & $0.748$ & $0.789$ & $0.774$ \\
+& CostAwarePriority & $-68.661$ & $2.946$ & $5.024$ & $0.712$ & $0.808$ & $0.797$ \\
+& PriorityHeuristic & $-61.186$ & $2.845$ & $5.004$ & $0.729$ & $0.814$ & $0.784$ \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
 \section{Discussion}
 The experiments highlight one central lesson: reward alignment matters more than algorithm choice in this environment. The naive cost-aware reward collapsed because the agent was constrained by cost but rewarded mainly by request count. That created severe credit-assignment noise. Serving a few cheap requests could look superficially good under one part of the reward while still causing congestion penalties elsewhere, and the agent eventually converged to a degenerate low-admission strategy. Once the positive signal was changed to processed cost, the optimization target became congruent with the environment's real constraint. Stability improved immediately.
+
+The warm-start experiments add a second lesson: imitation alone is not enough, but it is useful. Behavioral cloning transferred a large fraction of the heuristic's competence into the PPO policy. Standard PPO fine-tuning then destroyed that cloned behavior, demonstrating that warm-starting without policy regularization is unsafe in this domain. Behavior-regularized PPO fixed that specific failure mode. It did not make PPO dominant over heuristics, but it turned warm-starting into a stable and reproducible procedure.
 
 The second lesson is that heuristics remain strong in structured domains. The cost-aware heuristics directly encode assumptions about priority, cost pressure, and queue growth. PPO, by contrast, must discover those relationships from sampled interaction. With limited training and a discrete action space, it is unsurprising that the learned controller remains competitive rather than dominant. This is a common RL pattern in constrained combinatorial settings: hand-crafted policies exploit inductive bias for free, whereas learned policies pay a sample-efficiency tax.
 
 The OOD results sharpen this point. The cost-aware PPO generalized well to \texttt{cheap\_flood}, where many inexpensive requests are easy to pack into the budget. But it failed badly on \texttt{expensive\_attack}, where a few large-cost requests distort the training distribution. The policy trained on uniform costs from $1$ to $5$ did not learn a sufficiently abstract notion of cost packing. Instead, it overfit to the scale seen in training. This is a classic distribution-shift failure of pure model-free RL.
 
+The Azure-calibrated transfer test refines that observation. When evaluated under a production-derived cost PMF, all policies degraded substantially because the distribution was far more skewed than the synthetic uniform costs used during training. However, the behavior-regularized warm-start PPO was more robust than the plain cost-only PPO across all four scenarios and even achieved the best reward on Azure-calibrated \texttt{high\_load} and \texttt{oscillating}. This suggests that heuristic imitation does not just stabilize PPO training; it also provides a better inductive bias under realistic cost shifts.
+
 There is also a genuine systems trade-off in the final cost-aware policy. It serves fewer requests than the count-blind PPO, but it uses almost all of the budget and explicitly optimizes useful computational work rather than raw admissions. In a production setting where compute is the real bottleneck, this behavior may be preferable. That is, lower request throughput is not automatically worse if the served workload is more computationally valuable.
 
-Finally, the fine-tuning result shows that post-training specialization can help modestly in-distribution, but does not solve the underlying OOD weakness. To surpass the strongest heuristics, the agent would likely need richer feature engineering, more expressive actions, value-aware objectives, or online adaptation. Those are natural next steps, but they were beyond the scope of this project.
+Finally, neither specialization nor warm-starting fully solved the gap to the strongest heuristics. High-load heuristic controllers still encoded domain structure more effectively than PPO learned from interaction. To surpass them, the agent would likely need richer feature engineering, more expressive actions, value-aware objectives, or online adaptation. Those are natural next steps, but they were beyond the scope of this project.
 
 \section{Conclusion and Future Work}
 This project extended a PPO-based API gateway rate limiter from a class-based count environment to a cost-aware admission-control setting. The main scientific contribution is not merely the environment extension itself, but the demonstration that reward design determines whether learning succeeds at all. A naive cost-aware reward caused policy collapse. Replacing the count-throughput term with a cost-served objective stabilized training and produced a high-utilisation cost-aware policy.
 
 Three conclusions follow. First, reward design is critical in constrained RL systems. Second, RL can learn a stable and meaningful cost-aware admission controller that uses the processing budget aggressively and consistently. Third, strong heuristics remain difficult baselines to beat, particularly under adversarial or unseen cost distributions.
+
+The warm-start extension refines the second conclusion: heuristic demonstrations can be transferred into PPO through behavioral cloning, and behavior-regularized PPO can preserve that initialization during fine-tuning. This is a useful algorithmic contribution even though the resulting policy still did not outperform the strongest teacher heuristic overall.
+
+The Azure integration adds a final practical conclusion: evaluating only on synthetic cost distributions can overstate robustness. A production-derived cost PMF revealed a much harsher operating regime, but also showed that the regularized warm-start PPO transferred better than the plain cost-only agent.
 
 Future work should explore policies that adapt online to new cost regimes, integrate more realistic resource accounting, coordinate across multiple gateways, and impose explicit safety constraints for service-level objectives. More broadly, the project suggests that the most promising route is not blindly scaling PPO, but combining learning with stronger structural priors about how expensive requests should be packed under limited budget.
 
@@ -586,6 +694,8 @@ The project was implemented as an extension of the existing reinforcement-learni
     \item cost-aware screening outputs,
     \item full cost-aware comparisons,
     \item fine-tuning checkpoints and evaluation files,
+    \item warm-start behavioral cloning and regularized PPO runs,
+    \item Azure trace cost-profile extraction and transfer-evaluation outputs,
     \item narrative documents explaining experimental outcomes.
 \end{itemize}
 
@@ -624,6 +734,7 @@ This report package includes the following copied plot assets under \texttt{figu
     \item \texttt{cost\_cheap\_flood\_throughput.png}
     \item \texttt{cost\_cheap\_flood\_budget\_utilization.png}
     \item \texttt{cost\_expensive\_attack\_latency.png}
+    \item \texttt{azure\_duration\_histogram\_fit.png}
 \end{itemize}
 
 \end{document}

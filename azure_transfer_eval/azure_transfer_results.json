@@ -1,0 +1,1382 @@
+{
+  "profile": {
+    "source_url": "https://github.com/Azure/AzurePublicDataset/raw/master/data/AzureFunctionsInvocationTraceForTwoWeeksJan2021.rar",
+    "archive_path": "azure_trace_artifacts/raw/AzureFunctionsInvocationTraceForTwoWeeksJan2021.rar",
+    "tsv_path": "azure_trace_artifacts/extracted/AzureFunctionsInvocationTraceForTwoWeeksJan2021.txt",
+    "rows_seen": 1809618,
+    "sample_size_used": 500000,
+    "mu": -3.1052149759990932,
+    "sigma": 3.131886699099867,
+    "median_duration_seconds": 0.046,
+    "mean_duration_seconds": 3.6471454519999997,
+    "p95_duration_seconds": 18.845,
+    "target_median_cost": 3.0,
+    "scale_factor": 65.21739130434783,
+    "clip_max": 15,
+    "suggested_clip_from_p95": 1230,
+    "azure_cost_values": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "azure_cost_probabilities": [
+      0.409294,
+      0.030126,
+      0.065294,
+      0.009424,
+      0.025474,
+      0.023582,
+      0.023684,
+      0.019232,
+      0.012688,
+      0.009168,
+      0.006294,
+      0.005832,
+      0.00626,
+      0.006314,
+      0.347334
+    ],
+    "recommended_max_expected_service_cost": 15.0,
+    "recommended_max_expected_queue_cost": 1080.0
+  },
+  "env_config": {
+    "use_azure_cost": true,
+    "service_budget_per_step": 24.0,
+    "max_expected_service_cost": 15.0,
+    "max_expected_queue_cost": 1080.0
+  },
+  "results": {
+    "low_load": {
+      "ppo_cost_only": {
+        "throughput": {
+          "mean": 2.795833333333333,
+          "stdev": 0.13191933399504482
+        },
+        "latency": {
+          "mean": 7.397478757899765,
+          "stdev": 0.7012442570844308
+        },
+        "drop_rate": {
+          "mean": 0.30293934846018195,
+          "stdev": 0.03969728500666429
+        },
+        "high_priority_success_rate": {
+          "mean": 0.4957561728395061,
+          "stdev": 0.040328915717059134
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.006597222222222223,
+          "stdev": 0.003854735581315637
+        },
+        "served_cost": {
+          "mean": 18.69953703703704,
+          "stdev": 0.4432953644059176
+        },
+        "budget_utilization": {
+          "mean": 0.77914737654321,
+          "stdev": 0.01847064018357985
+        },
+        "rejected_cost": {
+          "mean": 12.90462962962963,
+          "stdev": 1.9523515327484697
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.698650771579422,
+          "stdev": 0.06622862428019634
+        },
+        "reward_drop": {
+          "mean": -0.36352721815221795,
+          "stdev": 0.04763674200799704
+        },
+        "reward_high_drop": {
+          "mean": -0.009895833333333331,
+          "stdev": 0.005782103371973455
+        },
+        "reward_overload": {
+          "mean": -0.0028356481481481483,
+          "stdev": 0.0038494436238754497
+        },
+        "reward_cost_processed": {
+          "mean": 1.168721064814815,
+          "stdev": 0.02770596027536985
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.4115740740740741,
+          "stdev": 0.04922689116106593
+        },
+        "action_frac_hold": {
+          "mean": 0.36782407407407397,
+          "stdev": 0.04826510167152903
+        },
+        "action_frac_increase": {
+          "mean": 0.22060185185185188,
+          "stdev": 0.04087342068093486
+        },
+        "reward": {
+          "mean": 0.09381159360169299,
+          "stdev": 0.11615976373458999
+        },
+        "total_reward": {
+          "mean": 16.886086848304732,
+          "stdev": 20.908757472226196
+        }
+      },
+      "ppo_warm_start_reg_l010": {
+        "throughput": {
+          "mean": 2.827777777777778,
+          "stdev": 0.1827798701846372
+        },
+        "latency": {
+          "mean": 7.186048831569665,
+          "stdev": 0.5659285953827482
+        },
+        "drop_rate": {
+          "mean": 0.29917870709537386,
+          "stdev": 0.048299151176181686
+        },
+        "high_priority_success_rate": {
+          "mean": 0.5047337962962963,
+          "stdev": 0.03367427526098516
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.007608024691358027,
+          "stdev": 0.004130381157711954
+        },
+        "served_cost": {
+          "mean": 18.804166666666667,
+          "stdev": 0.49133186832416814
+        },
+        "budget_utilization": {
+          "mean": 0.7835069444444446,
+          "stdev": 0.020472161180173594
+        },
+        "rejected_cost": {
+          "mean": 12.549537037037036,
+          "stdev": 2.027547082811748
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.678682389648246,
+          "stdev": 0.0534488117861485
+        },
+        "reward_drop": {
+          "mean": -0.35901444851444825,
+          "stdev": 0.05795898141141794
+        },
+        "reward_high_drop": {
+          "mean": -0.011412037037037038,
+          "stdev": 0.006195571736567932
+        },
+        "reward_overload": {
+          "mean": -0.002739197530864198,
+          "stdev": 0.0043545848021401354
+        },
+        "reward_cost_processed": {
+          "mean": 1.1752604166666667,
+          "stdev": 0.03070824177026051
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.6747685185185185,
+          "stdev": 0.06070305500926215
+        },
+        "action_frac_hold": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_increase": {
+          "mean": 0.32523148148148145,
+          "stdev": 0.060703055009262145
+        },
+        "reward": {
+          "mean": 0.12341234393607085,
+          "stdev": 0.11535124779454071
+        },
+        "total_reward": {
+          "mean": 22.214221908492746,
+          "stdev": 20.76322460301733
+        }
+      },
+      "cost_aware_priority": {
+        "throughput": {
+          "mean": 2.7687500000000003,
+          "stdev": 0.11631315777228654
+        },
+        "latency": {
+          "mean": 4.354941716269844,
+          "stdev": 1.2529905016739271
+        },
+        "drop_rate": {
+          "mean": 0.30354894591005727,
+          "stdev": 0.030873450338222166
+        },
+        "high_priority_success_rate": {
+          "mean": 0.5177314814814814,
+          "stdev": 0.041891912196852475
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.00595679012345679,
+          "stdev": 0.002547144005672722
+        },
+        "served_cost": {
+          "mean": 18.597222222222218,
+          "stdev": 0.32292942549205866
+        },
+        "budget_utilization": {
+          "mean": 0.7748842592592592,
+          "stdev": 0.013455392728835747
+        },
+        "rejected_cost": {
+          "mean": 12.956712962962966,
+          "stdev": 1.8840047533928737
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.41130005098104067,
+          "stdev": 0.11833799182475967
+        },
+        "reward_drop": {
+          "mean": -0.3642587350920681,
+          "stdev": 0.037048140405866514
+        },
+        "reward_high_drop": {
+          "mean": -0.008935185185185185,
+          "stdev": 0.0038207160085090837
+        },
+        "reward_overload": {
+          "mean": -0.006278935185185186,
+          "stdev": 0.013293623298892764
+        },
+        "reward_cost_processed": {
+          "mean": 1.1623263888888886,
+          "stdev": 0.020183089093253666
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.38842592592592595,
+          "stdev": 0.018600863619549858
+        },
+        "action_frac_hold": {
+          "mean": 0.24699074074074076,
+          "stdev": 0.037140806723402336
+        },
+        "action_frac_increase": {
+          "mean": 0.3645833333333333,
+          "stdev": 0.018737135504488953
+        },
+        "reward": {
+          "mean": 0.3715534824454095,
+          "stdev": 0.1396607385541617
+        },
+        "total_reward": {
+          "mean": 66.87962684017371,
+          "stdev": 25.138932939749107
+        }
+      },
+      "priority_heuristic": {
+        "throughput": {
+          "mean": 2.8011574074074073,
+          "stdev": 0.11249117776187162
+        },
+        "latency": {
+          "mean": 5.585598269400351,
+          "stdev": 0.9891564662292132
+        },
+        "drop_rate": {
+          "mean": 0.28862741039824397,
+          "stdev": 0.0354824423339227
+        },
+        "high_priority_success_rate": {
+          "mean": 0.5025192901234569,
+          "stdev": 0.040699959269440374
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.004776234567901235,
+          "stdev": 0.0034644886142435926
+        },
+        "served_cost": {
+          "mean": 18.725925925925928,
+          "stdev": 0.28264179444751186
+        },
+        "budget_utilization": {
+          "mean": 0.780246913580247,
+          "stdev": 0.011776741435312934
+        },
+        "rejected_cost": {
+          "mean": 12.203240740740739,
+          "stdev": 1.9496912762390592
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.5275287254433668,
+          "stdev": 0.09342033292164797
+        },
+        "reward_drop": {
+          "mean": -0.34635289247789225,
+          "stdev": 0.042578930800707154
+        },
+        "reward_high_drop": {
+          "mean": -0.0071643518518518514,
+          "stdev": 0.00519673292136539
+        },
+        "reward_overload": {
+          "mean": -0.014380787037037037,
+          "stdev": 0.03713624698707764
+        },
+        "reward_cost_processed": {
+          "mean": 1.1703703703703705,
+          "stdev": 0.01766511215296949
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.3932870370370371,
+          "stdev": 0.024408139853490125
+        },
+        "action_frac_hold": {
+          "mean": 0.2381944444444445,
+          "stdev": 0.048854635013669274
+        },
+        "action_frac_increase": {
+          "mean": 0.36851851851851847,
+          "stdev": 0.024610037853320867
+        },
+        "reward": {
+          "mean": 0.2749436135602224,
+          "stdev": 0.15503218001763275
+        },
+        "total_reward": {
+          "mean": 49.48985044084004,
+          "stdev": 27.905792403173898
+        }
+      }
+    },
+    "high_load": {
+      "ppo_cost_only": {
+        "throughput": {
+          "mean": 2.9261574074074073,
+          "stdev": 0.1654421941644517
+        },
+        "latency": {
+          "mean": 7.787364486882713,
+          "stdev": 0.9824739838112749
+        },
+        "drop_rate": {
+          "mean": 0.8063319247609287,
+          "stdev": 0.013422884668460946
+        },
+        "high_priority_success_rate": {
+          "mean": 0.8388985590027257,
+          "stdev": 0.02631131894855386
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.15177337194698307,
+          "stdev": 0.02236760180220511
+        },
+        "served_cost": {
+          "mean": 19.139814814814816,
+          "stdev": 0.4125014571345521
+        },
+        "budget_utilization": {
+          "mean": 0.7974922839506173,
+          "stdev": 0.017187560713939655
+        },
+        "rejected_cost": {
+          "mean": 99.96805555555557,
+          "stdev": 3.921859630021868
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.7354733126500342,
+          "stdev": 0.09278920958217593
+        },
+        "reward_drop": {
+          "mean": -0.9675983097131166,
+          "stdev": 0.016107461602153178
+        },
+        "reward_high_drop": {
+          "mean": -0.22766005792047458,
+          "stdev": 0.033551402703307656
+        },
+        "reward_overload": {
+          "mean": -0.42473958333333334,
+          "stdev": 0.10209489904987172
+        },
+        "reward_cost_processed": {
+          "mean": 1.196238425925926,
+          "stdev": 0.025781341070909507
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.7509259259259261,
+          "stdev": 0.04431341393415667
+        },
+        "action_frac_hold": {
+          "mean": 0.007407407407407408,
+          "stdev": 0.007799601312922597
+        },
+        "action_frac_increase": {
+          "mean": 0.2416666666666667,
+          "stdev": 0.04150936490963561
+        },
+        "reward": {
+          "mean": -1.1592328376910324,
+          "stdev": 0.1828893819051065
+        },
+        "total_reward": {
+          "mean": -208.66191078438587,
+          "stdev": 32.920088742919184
+        }
+      },
+      "ppo_warm_start_reg_l010": {
+        "throughput": {
+          "mean": 2.7291666666666665,
+          "stdev": 0.15688057141533063
+        },
+        "latency": {
+          "mean": 4.611859534337833,
+          "stdev": 0.8653981386035852
+        },
+        "drop_rate": {
+          "mean": 0.827605025485171,
+          "stdev": 0.009910941109396077
+        },
+        "high_priority_success_rate": {
+          "mean": 0.8108820179306293,
+          "stdev": 0.03619680765368276
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.15775683421516754,
+          "stdev": 0.02789809716952555
+        },
+        "served_cost": {
+          "mean": 18.56064814814815,
+          "stdev": 0.3991769466625344
+        },
+        "budget_utilization": {
+          "mean": 0.7733603395061731,
+          "stdev": 0.016632372777605528
+        },
+        "rejected_cost": {
+          "mean": 103.30162037037036,
+          "stdev": 3.47457079187913
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.4355645115763509,
+          "stdev": 0.08173204642367198
+        },
+        "reward_drop": {
+          "mean": -0.9931260305822072,
+          "stdev": 0.011893129331275351
+        },
+        "reward_high_drop": {
+          "mean": -0.2366352513227513,
+          "stdev": 0.041847145754288294
+        },
+        "reward_overload": {
+          "mean": -1.9290123456790123e-05,
+          "stdev": 9.450191908885717e-05
+        },
+        "reward_cost_processed": {
+          "mean": 1.1600405092592594,
+          "stdev": 0.0249485591664084
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.730787037037037,
+          "stdev": 0.0674467079872821
+        },
+        "action_frac_hold": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_increase": {
+          "mean": 0.269212962962963,
+          "stdev": 0.06744670798728211
+        },
+        "reward": {
+          "mean": -0.5053045743455065,
+          "stdev": 0.11409584747884567
+        },
+        "total_reward": {
+          "mean": -90.95482338219115,
+          "stdev": 20.53725254619222
+        }
+      },
+      "cost_aware_priority": {
+        "throughput": {
+          "mean": 2.9099537037037035,
+          "stdev": 0.08245070692953126
+        },
+        "latency": {
+          "mean": 5.477071082691743,
+          "stdev": 0.8597002439672308
+        },
+        "drop_rate": {
+          "mean": 0.8073447569986306,
+          "stdev": 0.007973047885033701
+        },
+        "high_priority_success_rate": {
+          "mean": 0.8574176036155204,
+          "stdev": 0.023825750214173103
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.13125679747207522,
+          "stdev": 0.020686482899259614
+        },
+        "served_cost": {
+          "mean": 19.073842592592595,
+          "stdev": 0.24903721838797996
+        },
+        "budget_utilization": {
+          "mean": 0.7947434413580247,
+          "stdev": 0.010376550766165804
+        },
+        "rejected_cost": {
+          "mean": 100.81273148148149,
+          "stdev": 3.920054374549853
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.5172789355875534,
+          "stdev": 0.0811939119302384
+        },
+        "reward_drop": {
+          "mean": -0.9688137083983586,
+          "stdev": 0.009567657462040491
+        },
+        "reward_high_drop": {
+          "mean": -0.19688519620811284,
+          "stdev": 0.031029724348889412
+        },
+        "reward_overload": {
+          "mean": -0.16926118827160497,
+          "stdev": 0.11878100295850136
+        },
+        "reward_cost_processed": {
+          "mean": 1.1921151620370372,
+          "stdev": 0.015564826149248747
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.39166666666666666,
+          "stdev": 0.01809499594234594
+        },
+        "action_frac_hold": {
+          "mean": 0.24166666666666667,
+          "stdev": 0.0364854252917859
+        },
+        "action_frac_increase": {
+          "mean": 0.36666666666666653,
+          "stdev": 0.0185346145828511
+        },
+        "reward": {
+          "mean": -0.6601238664285924,
+          "stdev": 0.19228471998046825
+        },
+        "total_reward": {
+          "mean": -118.82229595714665,
+          "stdev": 34.611249596484285
+        }
+      },
+      "priority_heuristic": {
+        "throughput": {
+          "mean": 2.872222222222222,
+          "stdev": 0.10343016604706716
+        },
+        "latency": {
+          "mean": 5.82997314397922,
+          "stdev": 0.80229054993627
+        },
+        "drop_rate": {
+          "mean": 0.8146105575256583,
+          "stdev": 0.00793623221569419
+        },
+        "high_priority_success_rate": {
+          "mean": 0.8504569170541392,
+          "stdev": 0.02743464191327782
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.1348445600181711,
+          "stdev": 0.023581771861713445
+        },
+        "served_cost": {
+          "mean": 18.90231481481481,
+          "stdev": 0.3365461777451581
+        },
+        "budget_utilization": {
+          "mean": 0.7875964506172841,
+          "stdev": 0.014022757406048218
+        },
+        "rejected_cost": {
+          "mean": 101.34097222222222,
+          "stdev": 3.751500259030393
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.5506085747091486,
+          "stdev": 0.07577188527175888
+        },
+        "reward_drop": {
+          "mean": -0.9775326690307917,
+          "stdev": 0.009523478658833224
+        },
+        "reward_high_drop": {
+          "mean": -0.20226684002725667,
+          "stdev": 0.03537265779257015
+        },
+        "reward_overload": {
+          "mean": -0.031722608024691346,
+          "stdev": 0.03382767987610783
+        },
+        "reward_cost_processed": {
+          "mean": 1.1813946759259257,
+          "stdev": 0.02103413610907238
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.36157407407407405,
+          "stdev": 0.03230776030487071
+        },
+        "action_frac_hold": {
+          "mean": 0.3018518518518518,
+          "stdev": 0.06467779397489203
+        },
+        "action_frac_increase": {
+          "mean": 0.33657407407407397,
+          "stdev": 0.032432127677777166
+        },
+        "reward": {
+          "mean": -0.5807360158659621,
+          "stdev": 0.12095938996719209
+        },
+        "total_reward": {
+          "mean": -104.53248285587317,
+          "stdev": 21.77269019409458
+        }
+      }
+    },
+    "bursty": {
+      "ppo_cost_only": {
+        "throughput": {
+          "mean": 2.865046296296296,
+          "stdev": 0.13013968265387948
+        },
+        "latency": {
+          "mean": 6.890028154394474,
+          "stdev": 1.2790058905964257
+        },
+        "drop_rate": {
+          "mean": 0.693270375629574,
+          "stdev": 0.015817362123357277
+        },
+        "high_priority_success_rate": {
+          "mean": 0.7311157039976486,
+          "stdev": 0.01892529505526821
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.09766111845972958,
+          "stdev": 0.014839655653287055
+        },
+        "served_cost": {
+          "mean": 19.068055555555556,
+          "stdev": 0.4188053005440858
+        },
+        "budget_utilization": {
+          "mean": 0.7945023148148147,
+          "stdev": 0.01745022085600353
+        },
+        "rejected_cost": {
+          "mean": 66.3590277777778,
+          "stdev": 2.416986103881306
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.6507248812483671,
+          "stdev": 0.12079500077855133
+        },
+        "reward_drop": {
+          "mean": -0.8319244507554903,
+          "stdev": 0.01898083454802913
+        },
+        "reward_high_drop": {
+          "mean": -0.14649167768959437,
+          "stdev": 0.022259483479930578
+        },
+        "reward_overload": {
+          "mean": -0.2532310956790123,
+          "stdev": 0.11599741023198308
+        },
+        "reward_cost_processed": {
+          "mean": 1.1917534722222223,
+          "stdev": 0.026175331284005364
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.7726851851851854,
+          "stdev": 0.04906305895276111
+        },
+        "action_frac_hold": {
+          "mean": 0.06481481481481481,
+          "stdev": 0.04188482875627815
+        },
+        "action_frac_increase": {
+          "mean": 0.16249999999999995,
+          "stdev": 0.024858698908695374
+        },
+        "reward": {
+          "mean": -0.6906186331502413,
+          "stdev": 0.2236913332938192
+        },
+        "total_reward": {
+          "mean": -124.31135396704342,
+          "stdev": 40.26443999288746
+        }
+      },
+      "ppo_warm_start_reg_l010": {
+        "throughput": {
+          "mean": 2.7837962962962965,
+          "stdev": 0.09812953671563078
+        },
+        "latency": {
+          "mean": 5.463290853308216,
+          "stdev": 0.6752837584271658
+        },
+        "drop_rate": {
+          "mean": 0.6960086178270765,
+          "stdev": 0.017822133330063723
+        },
+        "high_priority_success_rate": {
+          "mean": 0.7212256577013524,
+          "stdev": 0.03796228071024388
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.10891736478542034,
+          "stdev": 0.018913665253706025
+        },
+        "served_cost": {
+          "mean": 18.722453703703703,
+          "stdev": 0.3326179084451543
+        },
+        "budget_utilization": {
+          "mean": 0.7801022376543211,
+          "stdev": 0.013859079518548059
+        },
+        "rejected_cost": {
+          "mean": 67.50787037037037,
+          "stdev": 3.234504293779897
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.5159774694791092,
+          "stdev": 0.06377679940701012
+        },
+        "reward_drop": {
+          "mean": -0.835210341392493,
+          "stdev": 0.021386559996076613
+        },
+        "reward_high_drop": {
+          "mean": -0.16337604717813048,
+          "stdev": 0.028370497880559047
+        },
+        "reward_overload": {
+          "mean": -0.00034722222222222224,
+          "stdev": 0.0006330187275972783
+        },
+        "reward_cost_processed": {
+          "mean": 1.1701533564814814,
+          "stdev": 0.020788619277822145
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.7738425925925928,
+          "stdev": 0.03058207749560253
+        },
+        "action_frac_hold": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_increase": {
+          "mean": 0.22615740740740745,
+          "stdev": 0.03058207749560253
+        },
+        "reward": {
+          "mean": -0.3447577237904729,
+          "stdev": 0.09260172096213125
+        },
+        "total_reward": {
+          "mean": -62.05639028228513,
+          "stdev": 16.668309773183623
+        }
+      },
+      "cost_aware_priority": {
+        "throughput": {
+          "mean": 2.985416666666666,
+          "stdev": 0.08118507150132505
+        },
+        "latency": {
+          "mean": 5.3718881419185225,
+          "stdev": 1.2583954848017835
+        },
+        "drop_rate": {
+          "mean": 0.6703909904490272,
+          "stdev": 0.022429767580278395
+        },
+        "high_priority_success_rate": {
+          "mean": 0.7742075433568489,
+          "stdev": 0.037889316376533505
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.06971799676660788,
+          "stdev": 0.012565272214096798
+        },
+        "served_cost": {
+          "mean": 19.247685185185187,
+          "stdev": 0.262323307435508
+        },
+        "budget_utilization": {
+          "mean": 0.8019868827160495,
+          "stdev": 0.010930137809812801
+        },
+        "rejected_cost": {
+          "mean": 65.04328703703702,
+          "stdev": 3.911775298774411
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.507344991181194,
+          "stdev": 0.11884846245350172
+        },
+        "reward_drop": {
+          "mean": -0.8044691885388335,
+          "stdev": 0.026915721096334
+        },
+        "reward_high_drop": {
+          "mean": -0.10457699514991181,
+          "stdev": 0.0188479083211452
+        },
+        "reward_overload": {
+          "mean": -0.225414737654321,
+          "stdev": 0.1815225044621026
+        },
+        "reward_cost_processed": {
+          "mean": 1.2029803240740742,
+          "stdev": 0.01639520671471925
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.39305555555555566,
+          "stdev": 0.01590447193684558
+        },
+        "action_frac_hold": {
+          "mean": 0.23912037037037037,
+          "stdev": 0.03187128428309159
+        },
+        "action_frac_increase": {
+          "mean": 0.3678240740740741,
+          "stdev": 0.016133098994407645
+        },
+        "reward": {
+          "mean": -0.43882558845018593,
+          "stdev": 0.2783226425295845
+        },
+        "total_reward": {
+          "mean": -78.98860592103345,
+          "stdev": 50.09807565532521
+        }
+      },
+      "priority_heuristic": {
+        "throughput": {
+          "mean": 2.90324074074074,
+          "stdev": 0.14505553258201984
+        },
+        "latency": {
+          "mean": 5.139566437773902,
+          "stdev": 1.1379245209309294
+        },
+        "drop_rate": {
+          "mean": 0.6811013978046049,
+          "stdev": 0.01965463104212677
+        },
+        "high_priority_success_rate": {
+          "mean": 0.7504934597295709,
+          "stdev": 0.030882803941866554
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.07791519694297473,
+          "stdev": 0.010550375231352828
+        },
+        "served_cost": {
+          "mean": 19.01111111111111,
+          "stdev": 0.3751900574020799
+        },
+        "budget_utilization": {
+          "mean": 0.7921296296296295,
+          "stdev": 0.01563291905842006
+        },
+        "rejected_cost": {
+          "mean": 65.16898148148148,
+          "stdev": 2.735743760948397
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.4854034969008685,
+          "stdev": 0.10747064919903221
+        },
+        "reward_drop": {
+          "mean": -0.8173216773655271,
+          "stdev": 0.02358555725055224
+        },
+        "reward_high_drop": {
+          "mean": -0.11687279541446206,
+          "stdev": 0.015825562847029233
+        },
+        "reward_overload": {
+          "mean": -0.06412037037037037,
+          "stdev": 0.06951995358058007
+        },
+        "reward_cost_processed": {
+          "mean": 1.1881944444444443,
+          "stdev": 0.023449378587629993
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.34814814814814804,
+          "stdev": 0.033799742837077436
+        },
+        "action_frac_hold": {
+          "mean": 0.32986111111111105,
+          "stdev": 0.06734383338356485
+        },
+        "action_frac_increase": {
+          "mean": 0.3219907407407407,
+          "stdev": 0.03359315672756707
+        },
+        "reward": {
+          "mean": -0.2955238956067832,
+          "stdev": 0.19383285158143684
+        },
+        "total_reward": {
+          "mean": -53.19430120922098,
+          "stdev": 34.88991328465863
+        }
+      }
+    },
+    "oscillating": {
+      "ppo_cost_only": {
+        "throughput": {
+          "mean": 2.8780092592592594,
+          "stdev": 0.16466168545428833
+        },
+        "latency": {
+          "mean": 6.12477531807827,
+          "stdev": 1.229342631712094
+        },
+        "drop_rate": {
+          "mean": 0.7300457522471792,
+          "stdev": 0.01681199418897856
+        },
+        "high_priority_success_rate": {
+          "mean": 0.7938767636684304,
+          "stdev": 0.0356632459795998
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.07818066578483247,
+          "stdev": 0.016867168338925646
+        },
+        "served_cost": {
+          "mean": 18.965972222222224,
+          "stdev": 0.49502710200859457
+        },
+        "budget_utilization": {
+          "mean": 0.7902488425925925,
+          "stdev": 0.02062612925035807
+        },
+        "rejected_cost": {
+          "mean": 66.25092592592593,
+          "stdev": 3.632920638215389
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.5784510022629477,
+          "stdev": 0.11610458188391982
+        },
+        "reward_drop": {
+          "mean": -0.876054902696617,
+          "stdev": 0.020174393026774397
+        },
+        "reward_high_drop": {
+          "mean": -0.11727099867724865,
+          "stdev": 0.02530075250838846
+        },
+        "reward_overload": {
+          "mean": -0.23786651234567902,
+          "stdev": 0.10263221485134545
+        },
+        "reward_cost_processed": {
+          "mean": 1.185373263888889,
+          "stdev": 0.03093919387553716
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.7398148148148147,
+          "stdev": 0.05295018032067622
+        },
+        "action_frac_hold": {
+          "mean": 0.049999999999999996,
+          "stdev": 0.04121738450980736
+        },
+        "action_frac_increase": {
+          "mean": 0.21018518518518522,
+          "stdev": 0.0285950621779811
+        },
+        "reward": {
+          "mean": -0.624270152093603,
+          "stdev": 0.2410198787074215
+        },
+        "total_reward": {
+          "mean": -112.36862737684855,
+          "stdev": 43.383578167335884
+        }
+      },
+      "ppo_warm_start_reg_l010": {
+        "throughput": {
+          "mean": 2.7358796296296304,
+          "stdev": 0.1182487525926254
+        },
+        "latency": {
+          "mean": 4.4533782747281005,
+          "stdev": 0.6135290862154129
+        },
+        "drop_rate": {
+          "mean": 0.7480250393795965,
+          "stdev": 0.01289704941049039
+        },
+        "high_priority_success_rate": {
+          "mean": 0.7893357767489714,
+          "stdev": 0.028007167716139394
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.08304600235155792,
+          "stdev": 0.015787586238589252
+        },
+        "served_cost": {
+          "mean": 18.56412037037037,
+          "stdev": 0.34669662312762983
+        },
+        "budget_utilization": {
+          "mean": 0.7735050154320987,
+          "stdev": 0.014445692630317886
+        },
+        "rejected_cost": {
+          "mean": 69.98402777777777,
+          "stdev": 2.690807751713743
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.4205968370576539,
+          "stdev": 0.057944413698122345
+        },
+        "reward_drop": {
+          "mean": -0.8976300472555176,
+          "stdev": 0.01547645929258866
+        },
+        "reward_high_drop": {
+          "mean": -0.12456900352733681,
+          "stdev": 0.023681379357883878
+        },
+        "reward_overload": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_cost_processed": {
+          "mean": 1.1602575231481482,
+          "stdev": 0.021668538945476865
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.7474537037037036,
+          "stdev": 0.041990821744201025
+        },
+        "action_frac_hold": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_increase": {
+          "mean": 0.2525462962962963,
+          "stdev": 0.04199082174420102
+        },
+        "reward": {
+          "mean": -0.28253836469236,
+          "stdev": 0.08172800609514035
+        },
+        "total_reward": {
+          "mean": -50.85690564462479,
+          "stdev": 14.71104109712526
+        }
+      },
+      "cost_aware_priority": {
+        "throughput": {
+          "mean": 2.945833333333333,
+          "stdev": 0.07964039548239696
+        },
+        "latency": {
+          "mean": 5.02437575782628,
+          "stdev": 1.5050440430397591
+        },
+        "drop_rate": {
+          "mean": 0.7118829242922885,
+          "stdev": 0.012939274146553683
+        },
+        "high_priority_success_rate": {
+          "mean": 0.8084246399176956,
+          "stdev": 0.03447981602959122
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.06208645649617873,
+          "stdev": 0.009217753891229452
+        },
+        "served_cost": {
+          "mean": 19.129861111111115,
+          "stdev": 0.32216313176328154
+        },
+        "budget_utilization": {
+          "mean": 0.797077546296296,
+          "stdev": 0.013423463823469962
+        },
+        "rejected_cost": {
+          "mean": 65.41898148148148,
+          "stdev": 2.7220215427690166
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.47452437712803747,
+          "stdev": 0.14214304850931053
+        },
+        "reward_drop": {
+          "mean": -0.8542595091507476,
+          "stdev": 0.01552712897586455
+        },
+        "reward_high_drop": {
+          "mean": -0.09312968474426807,
+          "stdev": 0.013826630836844166
+        },
+        "reward_overload": {
+          "mean": -0.15515046296296295,
+          "stdev": 0.16713428888572368
+        },
+        "reward_cost_processed": {
+          "mean": 1.1956163194444447,
+          "stdev": 0.020135195735205096
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.3912037037037037,
+          "stdev": 0.017097229662200408
+        },
+        "action_frac_hold": {
+          "mean": 0.24305555555555558,
+          "stdev": 0.03487767135583427
+        },
+        "action_frac_increase": {
+          "mean": 0.3657407407407407,
+          "stdev": 0.017921120980709457
+        },
+        "reward": {
+          "mean": -0.3814477145415714,
+          "stdev": 0.30365793941359603
+        },
+        "total_reward": {
+          "mean": -68.66058861748283,
+          "stdev": 54.65842909444728
+        }
+      },
+      "priority_heuristic": {
+        "throughput": {
+          "mean": 2.844907407407408,
+          "stdev": 0.1148281250401338
+        },
+        "latency": {
+          "mean": 5.003916239528219,
+          "stdev": 1.1849116617621962
+        },
+        "drop_rate": {
+          "mean": 0.7289287959961989,
+          "stdev": 0.011677958576734853
+        },
+        "high_priority_success_rate": {
+          "mean": 0.8142937059082893,
+          "stdev": 0.029720920077349867
+        },
+        "high_priority_drop_rate": {
+          "mean": 0.07045800264550266,
+          "stdev": 0.014854834883101662
+        },
+        "served_cost": {
+          "mean": 18.813194444444445,
+          "stdev": 0.27190315768761103
+        },
+        "budget_utilization": {
+          "mean": 0.7838831018518521,
+          "stdev": 0.011329298236983795
+        },
+        "rejected_cost": {
+          "mean": 66.93101851851851,
+          "stdev": 2.2070222411698595
+        },
+        "reward_throughput": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "reward_latency": {
+          "mean": -0.4725920892887762,
+          "stdev": 0.11190832361087404
+        },
+        "reward_drop": {
+          "mean": -0.8747145551954402,
+          "stdev": 0.014013550292081905
+        },
+        "reward_high_drop": {
+          "mean": -0.10568700396825398,
+          "stdev": 0.02228225232465248
+        },
+        "reward_overload": {
+          "mean": -0.06275077160493828,
+          "stdev": 0.05458030524699776
+        },
+        "reward_cost_processed": {
+          "mean": 1.1758246527777778,
+          "stdev": 0.01699394735547569
+        },
+        "reward_budget_utilization": {
+          "mean": 0.0,
+          "stdev": 0.0
+        },
+        "action_frac_decrease": {
+          "mean": 0.34629629629629616,
+          "stdev": 0.03636261974212867
+        },
+        "action_frac_hold": {
+          "mean": 0.33333333333333326,
+          "stdev": 0.07230578591926128
+        },
+        "action_frac_increase": {
+          "mean": 0.32037037037037025,
+          "stdev": 0.03599168906671528
+        },
+        "reward": {
+          "mean": -0.33991976727963036,
+          "stdev": 0.17245464599628202
+        },
+        "total_reward": {
+          "mean": -61.18555811033346,
+          "stdev": 31.041836279330767
+        }
+      }
+    }
+  }
+}

@@ -43,6 +43,9 @@ class EnvConfig:
     reward_budget_utilization_weight: float = 0.0
     state_drop_window: int = 5
     use_request_costs: bool = False
+    use_azure_cost: bool = False
+    azure_cost_values: Tuple[int, ...] = ()
+    azure_cost_probabilities: Tuple[float, ...] = ()
     include_queue_trend: bool = False
     include_arrival_trend: bool = False
     include_time_phase: bool = False
