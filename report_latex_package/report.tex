@@ -1,11 +1,11 @@
-\documentclass[11pt]{article}
+\documentclass[conference]{IEEEtran}
 
-\usepackage[a4paper,margin=1in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
 \usepackage{microtype}
 \usepackage{amsmath,amssymb}
+\usepackage{cite}
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{array}
@@ -30,9 +30,14 @@
 
 \graphicspath{{figures/}}
 
-\title{\textbf{Cost-Aware Adaptive Rate Limiting with PPO: Reward Alignment, Budget Utilisation, and Robustness Assessment}}
-\author{Harshal Rudra(MT2025706), Manzil Baruah(MT2025715), Sunil Joshi(MT2025726)}
-\date{}
+\title{Cost-Aware Adaptive Rate Limiting with PPO: Reward Alignment, Budget Utilisation, and Robustness Assessment}
+\author{
+\IEEEauthorblockN{
+Harshal Rudra (MT2025706) \and
+Manzil Baruah (MT2025715) \and
+Sunil Joshi (MT2025726)
+}
+}
 
 \begin{document}
 \maketitle
@@ -44,6 +49,10 @@
 \begin{abstract}
 Modern API gateways must regulate admission under limited capacity while balancing three competing objectives: sustaining throughput, keeping latency low, and protecting high-priority traffic. This project begins from a class-based reinforcement learning rate limiter trained with Proximal Policy Optimization (PPO), and extends it to a cost-aware admission-control setting in which each request carries a computational service cost and the server capacity is modeled as a per-step processing budget rather than a fixed request count. The central technical challenge was reward alignment. A naive cost-aware reward, which retained request-count throughput and added only a small processed-cost bonus, caused the policy to collapse into an under-serving regime. Replacing the throughput term with a cost-served objective stabilized learning and produced a high-utilisation policy that used almost all available budget. Across standard traffic scenarios, the resulting cost-aware PPO traded raw request throughput for substantially higher cost efficiency and remained competitive with strong hand-crafted baselines. It generalized well to a cheap-flood out-of-distribution scenario, but still failed under an expensive-attack shift in which a few extremely costly requests monopolized capacity. The overall lesson is that reward engineering is decisive in constrained RL systems, and domain-aware heuristics remain difficult baselines to beat.
 \end{abstract}
+
+\begin{IEEEkeywords}
+reinforcement learning, PPO, API gateway, rate limiting, admission control, cost-aware control, robustness
+\end{IEEEkeywords}
 
 \section{Introduction}
 API gateways are the front line of modern distributed systems. They absorb bursty traffic, enforce fairness, and protect downstream services from overload. A rate limiter that is too permissive creates queues, unstable latency, and wasted retries; one that is too conservative drops useful traffic and reduces service quality. The problem becomes harder when requests have different priorities. Authentication, payment, or model-serving calls often carry higher business importance than logging or analytics requests, so a gateway should not treat all dropped requests equally.
@@ -257,7 +266,7 @@ Table~\ref{tab:count_ablation} summarizes the most important reward-weight ablat
 \centering
 \caption{High-load comparison for count-based PPO reward ablations. The original high-priority penalty ($3.1$) is overly conservative; lower penalty and higher throughput emphasis both recover much stronger operating points.}
 \label{tab:count_ablation}
-\resizebox{\textwidth}{!}{
+\resizebox{\columnwidth}{!}{
 \begin{tabular}{lcccccc}
 \toprule
 Variant & Train Reward Mean & High-Load Reward & Throughput & Latency & Drop Rate & HP Success \\
@@ -274,54 +283,56 @@ Figure~\ref{fig:count_ablation_bars} visualizes the throughput and high-priority
 
 \begin{figure}[H]
 \centering
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\columnwidth}
 \centering
 \begin{tikzpicture}
 \begin{axis}[
     ybar,
     bar width=16pt,
-    width=\textwidth,
+    width=\columnwidth,
     height=6cm,
     ymin=0,
     ymax=13,
     ylabel={Throughput},
-    symbolic x coords={Baseline,HP1.0,Throughput2.0},
+    symbolic x coords={Base,HP1.0,Thr2.0},
     xtick=data,
+    x tick label style={rotate=25,anchor=east,font=\scriptsize},
     nodes near coords,
     nodes near coords align={vertical},
     enlarge x limits=0.2
 ]
 \addplot[fill=blue!50] coordinates {
-(Baseline,8.587)
+(Base,8.587)
 (HP1.0,11.654)
-(Throughput2.0,11.388)
+(Thr2.0,11.388)
 };
 \end{axis}
 \end{tikzpicture}
 \caption{High-load throughput.}
 \end{subfigure}
 \hfill
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\columnwidth}
 \centering
 \begin{tikzpicture}
 \begin{axis}[
     ybar,
     bar width=16pt,
-    width=\textwidth,
+    width=\columnwidth,
     height=6cm,
     ymin=0.75,
     ymax=0.92,
     ylabel={HP Success},
-    symbolic x coords={Baseline,HP1.0,Throughput2.0},
+    symbolic x coords={Base,HP1.0,Thr2.0},
     xtick=data,
+    x tick label style={rotate=25,anchor=east,font=\scriptsize},
     nodes near coords,
     nodes near coords align={vertical},
     enlarge x limits=0.2
 ]
 \addplot[fill=teal!60] coordinates {
-(Baseline,0.830)
+(Base,0.830)
 (HP1.0,0.898)
-(Throughput2.0,0.894)
+(Thr2.0,0.894)
 };
 \end{axis}
 \end{tikzpicture}
@@ -333,20 +344,20 @@ Figure~\ref{fig:count_ablation_bars} visualizes the throughput and high-priority
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{count_training_curves.png}
+\includegraphics[width=\columnwidth]{count_training_curves.png}
 \caption{Representative count-based PPO training curves. Reward and core operating metrics stabilize after early improvement, showing that the count-based setting is comparatively easy to optimize once the reward weights are sensible.}
 \label{fig:count_training_curves}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\columnwidth}
 \centering
 \includegraphics[width=\textwidth]{count_high_load_throughput.png}
 \caption{High-load throughput comparison.}
 \end{subfigure}
 \hfill
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\columnwidth}
 \centering
 \includegraphics[width=\textwidth]{count_high_load_hp_success.png}
 \caption{High-load high-priority success comparison.}
@@ -364,7 +375,7 @@ Table~\ref{tab:naive_cost_failure} shows the final policy under that naive rewar
 \centering
 \caption{Final behavior of the naive cost-aware PPO after collapse. The agent under-serves badly and does not use the budget effectively.}
 \label{tab:naive_cost_failure}
-\resizebox{\textwidth}{!}{
+\resizebox{\columnwidth}{!}{
 \begin{tabular}{lcccccc}
 \toprule
 Scenario & Reward & Throughput & Latency & Drop Rate & HP Success & Budget Util. \\
@@ -382,7 +393,7 @@ The collapse is visible in Figure~\ref{fig:collapse_curve}. The policy reached a
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{naive_cost_training_curves.png}
+\includegraphics[width=\columnwidth]{naive_cost_training_curves.png}
 \caption{Training curves for the naive cost-aware PPO. After a promising mid-training phase, reward and throughput collapse while the agent drifts toward a near-always-decrease policy.}
 \label{fig:collapse_curve}
 \end{figure}
@@ -394,7 +405,7 @@ The key recovery step was to replace request-count throughput with processed cos
 \centering
 \caption{Count-blind versus cost-aware PPO. The cost-aware policy trades raw request throughput for high served cost and very high budget utilization. OOD cost-shift scenarios apply only to the cost-aware setting.}
 \label{tab:cost_vs_blind}
-\resizebox{\textwidth}{!}{
+\resizebox{\columnwidth}{!}{
 \begin{tabular}{llcccccc}
 \toprule
 Scenario & Policy & Reward & Throughput & Latency & Drop Rate & HP Success & Budget Util. \\
@@ -427,13 +438,13 @@ The standard scenarios reveal a deliberate trade-off. The count-blind agent serv
 
 \begin{figure}[H]
 \centering
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\columnwidth}
 \centering
 \includegraphics[width=\textwidth]{cost_high_load_served_cost.png}
 \caption{High-load served cost.}
 \end{subfigure}
 \hfill
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\columnwidth}
 \centering
 \includegraphics[width=\textwidth]{cost_high_load_budget_utilization.png}
 \caption{High-load budget utilization.}
@@ -444,13 +455,13 @@ The standard scenarios reveal a deliberate trade-off. The count-blind agent serv
 
 \begin{figure}[H]
 \centering
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\columnwidth}
 \centering
 \includegraphics[width=\textwidth]{cost_cheap_flood_throughput.png}
 \caption{Cheap-flood throughput.}
 \end{subfigure}
 \hfill
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\columnwidth}
 \centering
 \includegraphics[width=\textwidth]{cost_cheap_flood_budget_utilization.png}
 \caption{Cheap-flood budget utilization.}
@@ -461,7 +472,7 @@ The standard scenarios reveal a deliberate trade-off. The count-blind agent serv
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.78\textwidth]{cost_expensive_attack_latency.png}
+\includegraphics[width=\columnwidth]{cost_expensive_attack_latency.png}
 \caption{OOD expensive-attack scenario. Latency explodes because a few high-cost requests dominate the budget, exposing a major generalization weakness of the cost-aware PPO.}
 \label{fig:expensive_attack_latency}
 \end{figure}
@@ -473,7 +484,7 @@ The next question is whether cost-aware PPO can outperform cost-aware heuristics
 \centering
 \caption{Cost-aware PPO compared with strong cost-aware heuristics. PPO remains competitive, but the best heuristics still win on several stress scenarios.}
 \label{tab:heuristic_compare}
-\resizebox{\textwidth}{!}{
+\resizebox{\columnwidth}{!}{
 \begin{tabular}{llccccc}
 \toprule
 Scenario & Policy & Reward & Throughput & Latency & Drop Rate & HP Success \\
@@ -524,13 +535,13 @@ This ranking reinforces the central conclusion: PPO learns meaningful cost-aware
 
 \begin{figure}[H]
 \centering
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\columnwidth}
 \centering
 \includegraphics[width=\textwidth]{cost_high_load_throughput.png}
 \caption{High-load throughput across PPO and heuristics.}
 \end{subfigure}
 \hfill
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\columnwidth}
 \centering
 \includegraphics[width=\textwidth]{cost_high_load_latency.png}
 \caption{High-load latency across PPO and heuristics.}
@@ -546,7 +557,7 @@ The final experiment asked whether a short specialization stage on \texttt{high\
 \centering
 \caption{High-load fine-tuning of the cost-aware PPO. The specialized agent improves slightly on the target scenario but still does not surpass the strongest heuristics, and it hurts OOD performance on \texttt{expensive\_attack}.}
 \label{tab:finetune}
-\resizebox{\textwidth}{!}{
+\resizebox{\columnwidth}{!}{
 \begin{tabular}{lcccccc}
 \toprule
 Setting & Scenario & Reward & Throughput & Latency & Drop Rate & HP Success \\
@@ -584,7 +595,7 @@ Table~\ref{tab:warmstart} shows the final result for the full $\lambda=0.1$ run,
 \centering
 \caption{Warm-started PPO from heuristic demonstrations. Behavioral cloning successfully transfers teacher behavior; behavior-regularized PPO with $\lambda=0.1$ prevents collapse and gives modest gains over the cloned policy, but still trails the teacher on the main stress scenarios.}
 \label{tab:warmstart}
-\resizebox{\textwidth}{!}{
+\resizebox{\columnwidth}{!}{
 \begin{tabular}{llccccc}
 \toprule
 Scenario & Policy & Reward & Throughput & Latency & Drop Rate & HP Success \\
@@ -620,7 +631,7 @@ The final transfer-learning experiment replaced the synthetic request-cost distr
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.72\textwidth]{azure_duration_histogram_fit.png}
+\includegraphics[width=\columnwidth]{azure_duration_histogram_fit.png}
 \caption{Histogram of sampled Azure Functions invocation durations with a fitted log-normal density overlay. The raw duration distribution is extremely heavy-tailed, motivating the separate Azure-calibrated transfer test for cost-aware policies.}
 \label{fig:azure_duration_hist}
 \end{figure}
@@ -631,7 +642,7 @@ Two previously trained agents were evaluated without retraining: the base cost-a
 \centering
 \caption{Zero-shot transfer under Azure-calibrated request costs. All policies were trained without Azure data and then evaluated under the empirical PMF derived from the Azure Functions trace. The regularized warm-start PPO transfers better than the plain cost-only PPO, especially on \texttt{high\_load} and \texttt{oscillating}.}
 \label{tab:azure_transfer}
-\resizebox{\textwidth}{!}{
+\resizebox{\columnwidth}{!}{
 \begin{tabular}{llcccccc}
 \toprule
 Scenario & Policy & Reward & Throughput & Latency & Drop Rate & HP Success & Budget Util. \\
@@ -681,7 +692,7 @@ Table~\ref{tab:disturbance_eval} reports averages aggregated across the standard
 \centering
 \caption{Aggregate disturbance robustness across standard scenarios. Shock reward, collapse rate, and recovery rate are averaged across \texttt{low\_load}, \texttt{high\_load}, \texttt{bursty}, and \texttt{oscillating}. The warm-started PPO is best under demand surge and budget cut, while the heuristic remains strongest under cost shock and action corruption.}
 \label{tab:disturbance_eval}
-\resizebox{\textwidth}{!}{
+\resizebox{\columnwidth}{!}{
 \begin{tabular}{llcccc}
 \toprule
 Disturbance & Policy & Shock Reward & Collapse Rate & Recovery Rate & Robustness Score \\
@@ -741,57 +752,5 @@ The Azure integration adds a final practical conclusion: evaluating only on synt
 The disturbance evaluation adds a final resilience conclusion: transient shocks expose a different kind of robustness than static OOD shifts. In this setting, behavior-regularized warm-start PPO gave the best response to demand surge and budget loss, while the heuristic remained superior under cost shock and action corruption.
 
 Future work should explore policies that adapt online to new cost regimes, integrate more realistic resource accounting, coordinate across multiple gateways, and impose explicit safety constraints for service-level objectives. More broadly, the project suggests that the most promising route is not blindly scaling PPO, but combining learning with stronger structural priors about how expensive requests should be packed under limited budget.
-
-\appendix
-\section{Reproducibility and Artifacts}
-The project was implemented as an extension of the existing reinforcement-learning course project repository. The main artifacts generated during experimentation include:
-\begin{itemize}[leftmargin=1.5em]
-    \item count-based ablation summaries,
-    \item cost-aware screening outputs,
-    \item full cost-aware comparisons,
-    \item fine-tuning checkpoints and evaluation files,
-    \item warm-start behavioral cloning and regularized PPO runs,
-    \item Azure trace cost-profile extraction and transfer-evaluation outputs,
-    \item temporal disturbance robustness evaluation outputs,
-    \item narrative documents explaining experimental outcomes.
-\end{itemize}
-
-The important implementation principle was minimal refactoring: the PPO pipeline, plotting functions, and evaluation scripts were preserved wherever possible, and only the environment, reward, and heuristic logic were extended for cost-awareness.
-
-\section{Additional Hyperparameters for Fine-Tuning}
-\begin{table}[H]
-\centering
-\caption{Additional hyperparameters used in the high-load fine-tuning stage.}
-\begin{tabular}{ll}
-\toprule
-Parameter & Value \\
-\midrule
-Base training episodes & $260$ \\
-Fine-tuning episodes & $30$ \\
-Fine-tuning actor learning rate & $0.0075$ \\
-Fine-tuning critic learning rate & $0.0100$ \\
-Validation scenario & \texttt{high\_load} \\
-Validation frequency & every $10$ episodes \\
-Checkpoint selection & best validation reward \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\section{Included Figure Files}
-This report package includes the following copied plot assets under \texttt{figures/}:
-\begin{itemize}[leftmargin=1.5em]
-    \item \texttt{count\_training\_curves.png}
-    \item \texttt{count\_high\_load\_throughput.png}
-    \item \texttt{count\_high\_load\_hp\_success.png}
-    \item \texttt{naive\_cost\_training\_curves.png}
-    \item \texttt{cost\_high\_load\_throughput.png}
-    \item \texttt{cost\_high\_load\_latency.png}
-    \item \texttt{cost\_high\_load\_served\_cost.png}
-    \item \texttt{cost\_high\_load\_budget\_utilization.png}
-    \item \texttt{cost\_cheap\_flood\_throughput.png}
-    \item \texttt{cost\_cheap\_flood\_budget\_utilization.png}
-    \item \texttt{cost\_expensive\_attack\_latency.png}
-    \item \texttt{azure\_duration\_histogram\_fit.png}
-\end{itemize}
 
 \end{document}
