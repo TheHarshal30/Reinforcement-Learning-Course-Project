@@ -20,3 +20,5 @@ cost_aware_finetune_run/
 report.pdf
 *.html
 *.htm
+!docs/report.pdf
+!docs/rl_rate_limiter_explainer.html

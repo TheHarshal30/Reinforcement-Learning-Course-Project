@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart API Gateways — A Beginner's Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:       #0f0e0c;
+    --paper:     #f7f3ed;
+    --cream:     #ede8df;
+    --gold:      #c8902a;
+    --gold-lt:   #f0d48a;
+    --rust:      #b84b2a;
+    --teal:      #1d6a6e;
+    --teal-lt:   #e0f0f1;
+    --muted:     #6b6457;
+    --border:    #d4ccbe;
+    --card:      #ffffff;
+    --mono:      'JetBrains Mono', monospace;
+    --serif:     'Source Serif 4', Georgia, serif;
+    --display:   'Playfair Display', Georgia, serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--serif);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 18px;
+    line-height: 1.8;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 80px 40px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 40px,
+      rgba(200,144,42,.07) 40px,
+      rgba(200,144,42,.07) 41px
+    );
+  }
+  .hero-inner { max-width: 860px; margin: 0 auto; position: relative; }
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .hero-tag::before { content: ''; display: block; width: 30px; height: 1px; background: var(--gold); }
+  .hero h1 {
+    font-family: var(--display);
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    line-height: 1.12;
+    margin-bottom: 24px;
+    font-weight: 900;
+  }
+  .hero h1 em { color: var(--gold); font-style: italic; }
+  .hero-sub {
+    font-size: 1.05rem;
+    color: rgba(247,243,237,.75);
+    max-width: 620px;
+    line-height: 1.7;
+    margin-bottom: 40px;
+  }
+  .hero-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+  .pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid rgba(200,144,42,.5);
+    color: var(--gold-lt);
+    border-radius: 2px;
+  }
+
+  /* ── NAV ── */
+  .toc {
+    background: var(--ink);
+    border-top: 1px solid rgba(255,255,255,.08);
+    padding: 20px 40px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .toc-inner {
+    max-width: 860px; margin: 0 auto;
+    display: flex; gap: 0; flex-wrap: wrap;
+  }
+  .toc a {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(247,243,237,.55);
+    text-decoration: none;
+    padding: 6px 16px;
+    transition: color .2s;
+    border-right: 1px solid rgba(255,255,255,.1);
+  }
+  .toc a:first-child { padding-left: 0; }
+  .toc a:hover { color: var(--gold); }
+
+  /* ── LAYOUT ── */
+  .page { max-width: 860px; margin: 0 auto; padding: 0 40px; }
+
+  section { padding: 70px 0 20px; border-bottom: 1px solid var(--border); }
+  section:last-child { border-bottom: none; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--gold-lt); max-width: 60px; }
+
+  h2 {
+    font-family: var(--display);
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    line-height: 1.18;
+    margin-bottom: 28px;
+    font-weight: 700;
+  }
+  h3 {
+    font-family: var(--display);
+    font-size: 1.35rem;
+    margin: 40px 0 14px;
+    color: var(--ink);
+    font-style: italic;
+  }
+
+  p { margin-bottom: 18px; color: #2a2620; }
+
+  /* ── CALLOUT BOXES ── */
+  .callout {
+    border-left: 3px solid var(--gold);
+    background: var(--cream);
+    padding: 22px 26px;
+    margin: 32px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .callout p { margin-bottom: 0; font-size: .95rem; }
+
+  .callout.teal {
+    border-left-color: var(--teal);
+    background: var(--teal-lt);
+  }
+  .callout.teal .callout-label { color: var(--teal); }
+
+  .callout.rust {
+    border-left-color: var(--rust);
+    background: #fdf0ec;
+  }
+  .callout.rust .callout-label { color: var(--rust); }
+
+  /* ── EXAMPLE BOXES ── */
+  .example-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 28px 30px;
+    margin: 32px 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  .example-box .ex-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .example-box .ex-title span { color: var(--rust); font-weight: 600; }
+
+  /* ── ANALOGY CARD ── */
+  .analogy {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 32px 0;
+  }
+  .analogy-side {
+    padding: 24px 26px;
+  }
+  .analogy-side:first-child {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .analogy-side:last-child {
+    background: var(--cream);
+  }
+  .analogy-side .a-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    opacity: .5;
+    margin-bottom: 8px;
+  }
+  .analogy-side .a-head {
+    font-family: var(--display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+  .analogy-side p { font-size: .9rem; margin-bottom: 0; }
+  .analogy-side:first-child p { color: rgba(247,243,237,.8); }
+
+  /* ── SCENARIO TABLE ── */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin: 28px 0;
+  }
+  .sg-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    background: var(--card);
+  }
+  .sg-card .sg-name {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 6px;
+  }
+  .sg-card p { font-size: .88rem; margin-bottom: 0; }
+
+  /* ── REWARD FORMULA ── */
+  .formula {
+    background: var(--ink);
+    color: var(--gold-lt);
+    font-family: var(--mono);
+    font-size: .88rem;
+    padding: 20px 26px;
+    border-radius: 6px;
+    margin: 24px 0;
+    overflow-x: auto;
+    line-height: 2;
+  }
+  .formula .comment { color: rgba(240,212,138,.45); }
+
+  /* ── COMPARISON TABLE ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 28px 0;
+    font-size: .88rem;
+  }
+  .compare-table th {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 12px 16px;
+    background: var(--ink);
+    color: var(--gold-lt);
+  }
+  .compare-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .compare-table tr:nth-child(even) td { background: var(--cream); }
+  .compare-table .good { color: #1a7a3f; font-weight: 600; }
+  .compare-table .bad  { color: var(--rust); font-weight: 600; }
+
+  /* ── STEP LIST ── */
+  .step-list { margin: 24px 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 18px;
+    margin-bottom: 22px;
+    align-items: start;
+  }
+  .step-num {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--gold);
+    font-family: var(--mono);
+    font-size: .85rem;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .step-body strong {
+    display: block;
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  .step-body p { font-size: .92rem; margin-bottom: 0; }
+
+  /* ── GAUGE ── */
+  .gauge-row {
+    display: flex; flex-direction: column; gap: 14px;
+    margin: 24px 0;
+  }
+  .gauge-item { }
+  .gauge-label {
+    display: flex; justify-content: space-between;
+    font-size: .85rem;
+    margin-bottom: 5px;
+    font-family: var(--mono);
+  }
+  .gauge-label .name { color: var(--muted); letter-spacing: .05em; }
+  .gauge-label .val  { color: var(--ink); font-weight: 600; }
+  .gauge-track {
+    height: 8px;
+    background: var(--cream);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .gauge-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+  }
+  .gauge-fill.gold  { background: var(--gold); }
+  .gauge-fill.teal  { background: var(--teal); }
+  .gauge-fill.rust  { background: var(--rust); }
+  .gauge-fill.green { background: #2a8a50; }
+
+  /* ── REAL WORLD ── */
+  .rw-scenario {
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    color: var(--paper);
+    border-radius: 8px;
+    padding: 40px;
+    margin: 32px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .rw-scenario::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 160px; height: 160px;
+    border: 1px solid rgba(200,144,42,.2);
+    border-radius: 50%;
+  }
+  .rw-scenario::after {
+    content: '';
+    position: absolute;
+    top: 20px; right: 20px;
+    width: 80px; height: 80px;
+    border: 1px solid rgba(200,144,42,.15);
+    border-radius: 50%;
+  }
+  .rw-scenario .rw-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .rw-scenario h3 {
+    font-family: var(--display);
+    font-size: 1.6rem;
+    margin-bottom: 16px;
+    margin-top: 0;
+    color: white;
+    font-style: normal;
+  }
+  .rw-scenario p { color: rgba(247,243,237,.82); font-size: .95rem; }
+  .rw-flow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 28px;
+  }
+  .rw-node {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .rw-node .n-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--gold-lt);
+    opacity: .7;
+    margin-bottom: 6px;
+  }
+  .rw-node .n-val {
+    font-size: .88rem;
+    color: white;
+    line-height: 1.5;
+  }
+
+  /* ── LIMITATION CARDS ── */
+  .lim-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 28px 0;
+  }
+  .lim-card {
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--rust);
+    background: var(--card);
+    border-radius: 4px;
+    padding: 20px 22px;
+  }
+  .lim-card .lc-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .15em;
+    color: var(--rust);
+    margin-bottom: 8px;
+  }
+  .lim-card strong {
+    font-family: var(--display);
+    font-style: italic;
+    display: block;
+    margin-bottom: 8px;
+    font-size: 1rem;
+  }
+  .lim-card p { font-size: .88rem; margin-bottom: 0; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--ink);
+    color: rgba(247,243,237,.45);
+    text-align: center;
+    padding: 40px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    margin-top: 60px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .page { padding: 0 20px; }
+    .hero { padding: 50px 20px 40px; }
+    .toc { padding: 14px 20px; }
+    .analogy { grid-template-columns: 1fr; }
+    .scenario-grid { grid-template-columns: 1fr; }
+    .rw-flow { grid-template-columns: 1fr; }
+    .lim-grid { grid-template-columns: 1fr; }
+    .compare-table { font-size: .78rem; }
+    .compare-table th, .compare-table td { padding: 10px 10px; }
+  }
+
+  /* ── INLINE HIGHLIGHTS ── */
+  mark {
+    background: var(--gold-lt);
+    color: var(--ink);
+    padding: 0 3px;
+    border-radius: 2px;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: .82em;
+    background: var(--cream);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--rust);
+  }
+
+  /* animation on load */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .hero-inner > * {
+    animation: fadeUp .7s ease both;
+  }
+  .hero-inner > *:nth-child(1) { animation-delay: .1s; }
+  .hero-inner > *:nth-child(2) { animation-delay: .25s; }
+  .hero-inner > *:nth-child(3) { animation-delay: .4s; }
+  .hero-inner > *:nth-child(4) { animation-delay: .55s; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Research Explainer &nbsp;·&nbsp; Reinforcement Learning</div>
+    <h1>Teaching a Computer to be a <em>Smart Bouncer</em> for your APIs</h1>
+    <p class="hero-sub">A plain-English walkthrough of a research project that uses AI to manage internet traffic — deciding which requests get served, which wait, and which get turned away — all while staying within a limited computing budget.</p>
+    <div class="hero-pills">
+      <div class="pill">No prior ML knowledge needed</div>
+      <div class="pill">Real-world examples included</div>
+      <div class="pill">Limitations discussed</div>
+    </div>
+  </div>
+</header>
+
+<!-- STICKY NAV -->
+<nav class="toc">
+  <div class="toc-inner">
+    <a href="#basics">The Basics</a>
+    <a href="#rl">The AI Brain</a>
+    <a href="#cost">Cost Awareness</a>
+    <a href="#reward">Reward Design</a>
+    <a href="#results">Results</a>
+    <a href="#realworld">Real World</a>
+    <a href="#limitations">Limitations</a>
+  </div>
+</nav>
+
+<div class="page">
+
+<!-- ══════════════════════════════════
+     SECTION 1: THE BASICS
+════════════════════════════════════ -->
+<section id="basics">
+  <div class="section-label">Section 01</div>
+  <h2>What Problem Are We Solving?</h2>
+
+  <p>Imagine you run a popular restaurant. On a normal Tuesday, 30 customers walk in and you comfortably seat them all. But on New Year's Eve, 300 people show up at once. You can't serve everyone — so you need a system: a bouncer at the door who decides who gets in, how fast, and in what order.</p>
+
+  <p>In the world of software, <strong>APIs (Application Programming Interfaces)</strong> are the doors to online services. When you open an app, it sends dozens of tiny requests — "fetch my messages," "check my balance," "load this image" — to remote servers. Those servers can only handle so many requests at once. Without control, they get overwhelmed and crash.</p>
+
+  <div class="callout">
+    <div class="callout-label">Key Term — API Gateway</div>
+    <p>An <strong>API Gateway</strong> is the digital bouncer. It sits in front of a server and controls which incoming requests are allowed through, how many per second, and in what order. This project is about making that bouncer <em>smarter</em> using AI.</p>
+  </div>
+
+  <h3>The Problem with Old-School Bouncers</h3>
+  <p>Traditional rate limiters use fixed rules — for example: "allow a maximum of 12 requests per second, full stop." These rules work fine on a calm Tuesday, but they struggle when:</p>
+
+  <div class="example-box">
+    <div class="ex-title">Example — <span>Fixed Rules Failing</span></div>
+    <p>A shopping website normally gets 100 requests/second. It sets a hard limit of 150. On Black Friday, 5,000 requests arrive per second. The fixed limiter blocks most of them — including urgent payment confirmations — treating them the same as low-priority image loads.</p>
+    <br/>
+    <p>Result: customers see payment failures even though the server could have prioritized those requests and processed them fine.</p>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-side">
+      <div class="a-label">Old Approach</div>
+      <div class="a-head">The Rigid Bouncer</div>
+      <p>"The list says max 12 people. I don't care if one of them is the CEO having a cardiac event — rules are rules."</p>
+    </div>
+    <div class="analogy-side">
+      <div class="a-label">This Project's Approach</div>
+      <div class="a-head">The Intelligent Bouncer</div>
+      <p>"12 people is the guideline, but I'll adapt. I see payment requests piling up — I'll let those through first and hold the low-priority ones."</p>
+    </div>
+  </div>
+
+  <p>This research project builds that "intelligent bouncer" using a technique from AI called <strong>Reinforcement Learning</strong>.</p>
+</section>
+
+
+<!-- ══════════════════════════════════
+     SECTION 2: THE AI BRAIN (RL + PPO)
+════════════════════════════════════ -->
+<section id="rl">
+  <div class="section-label">Section 02</div>
+  <h2>The AI Brain — Reinforcement Learning & PPO</h2>
+
+  <p>So how do you teach a computer to make smart admission decisions? You could write thousands of rules by hand. Or you could let the AI <em>learn by doing</em> — which is exactly what Reinforcement Learning (RL) does.</p>
+
+  <div class="callout teal">
+    <div class="callout-label">What is Reinforcement Learning?</div>
+    <p>Think of training a dog. You don't explain the rules in English — you give treats when it does something right and say "no" when it doesn't. Over thousands of repetitions, it figures out what behavior earns treats. Reinforcement Learning is the same idea, but for software. The AI tries actions, gets "rewards" or "penalties," and slowly learns what to do.</p>
+  </div>
+
+  <h3>The Three Core Concepts</h3>
+
+  <div class="step-list">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-body">
+        <strong>State — What does the agent observe?</strong>
+        <p>At every moment, the AI looks at the current situation: how many requests are waiting in the queue, how long they've been waiting, how many were recently dropped, what the current traffic level is, and the priority mix of waiting requests.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-body">
+        <strong>Action — What can the agent do?</strong>
+        <p>The AI has exactly three choices: <code>decrease</code> the rate limit (let fewer requests in), <code>hold</code> it steady, or <code>increase</code> it (let more in). These change the limit in steps of 2, within the range of 2 to 18 requests per step.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-body">
+        <strong>Reward — How does it know if it did well?</strong>
+        <p>After each action, the environment scores the outcome. High throughput earns positive points. High latency (slow responses), dropped requests, and especially dropped <em>high-priority</em> requests earn penalties. The AI learns to maximize its total score over time.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Why PPO Specifically?</h3>
+  <p><strong>PPO (Proximal Policy Optimization)</strong> is a popular, stable RL algorithm. Think of it like a student who learns cautiously — it makes small, measured improvements each time rather than wild swings. This prevents the AI from "forgetting" good strategies while trying new ones.</p>
+
+  <div class="example-box">
+    <div class="ex-title">Example — <span>PPO in Plain Language</span></div>
+    <p>Imagine you're learning to ride a bike. One approach: every time you wobble, completely change your grip and posture (unstable learning). PPO's approach: make small corrections each time — lean <em>slightly</em> left, adjust speed <em>a little</em>. Over time, these careful improvements add up to a great rider, without ever falling completely off the bike.</p>
+  </div>
+
+  <h3>The Training Environment</h3>
+  <p>The AI trained across 260 simulated episodes, each 180 timesteps long. During training, it experienced four realistic traffic patterns:</p>
+
+  <div class="scenario-grid">
+    <div class="sg-card">
+      <div class="sg-name">🌿 Low Load</div>
+      <p>Traffic below capacity. Like a café on a Monday morning — easy to manage, but the AI must not over-admit and waste resources.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name">🔥 High Load</div>
+      <p>Sustained overload. Requests pour in faster than the server can handle. The AI must triage aggressively.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name">⚡ Bursty</div>
+      <p>Normal traffic with sudden spikes. Like a flash sale — calm, then chaos, then calm again. The AI must react quickly.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name">〰️ Oscillating</div>
+      <p>Traffic rises and falls in a wave pattern. The AI must anticipate cycles rather than just react to them.</p>
+    </div>
+  </div>
+
+  <p>Importantly, each request also has a <strong>priority class</strong>: high (e.g., payment), medium (e.g., profile load), or low (e.g., analytics ping). Dropped high-priority requests earn heavier penalties.</p>
+</section>
+
+
+<!-- ══════════════════════════════════
+     SECTION 3: COST-AWARE EXTENSION
+════════════════════════════════════ -->
+<section id="cost">
+  <div class="section-label">Section 03</div>
+  <h2>The New Idea — Cost-Aware Admission</h2>
+
+  <p>The original rate limiter treated all requests as equal units: "I can serve 12 requests per step." But in reality, not all requests cost the same to process. A simple lookup query takes milliseconds; a large AI model inference takes seconds and much more compute.</p>
+
+  <div class="callout">
+    <div class="callout-label">The Insight</div>
+    <p>This project's key innovation: replace the simple "12 requests per step" limit with a <mark>processing budget</mark> of 24 "cost units" per step. Each request carries a cost between 1 and 5. The server can process as many requests as fit within that budget.</p>
+  </div>
+
+  <div class="example-box">
+    <div class="ex-title">Example — <span>Cost Budget vs. Fixed Count</span></div>
+    <p><strong>Old system</strong> (fixed count = 12 per step): Receives 12 image-generation requests, each costing 5 units. Serves all 12 — but total cost = 60 units, way beyond real capacity. Server crashes.</p>
+    <br/>
+    <p><strong>New system</strong> (budget = 24 cost units): Receives 12 image-generation requests (cost 5 each). Can only serve 4 of them (4 × 5 = 20 ≤ 24). Also fits one cheap request (cost 3, total = 23). Serves 5 requests total — but server stays healthy.</p>
+    <br/>
+    <p><strong>Or alternatively:</strong> 24 cheap requests arrive (cost 1 each). All 24 can be served within budget — much higher throughput!</p>
+  </div>
+
+  <p>This means the AI now has a much harder problem. It can't just count requests — it must reason about the <em>mix of costs</em> in the queue and decide admission limits accordingly. Two cheap requests might be preferable to one expensive one, depending on the situation.</p>
+
+  <h3>New Information the AI Can See</h3>
+  <p>To handle cost awareness, the state was extended with new features the AI can observe:</p>
+  <div class="example-box">
+    <div class="ex-title">New State Features — <span>Cost-Aware Signals</span></div>
+    <p>
+      • <strong>Total queued service cost</strong> — how expensive is the entire backlog?<br/>
+      • <strong>Mean queued service cost</strong> — on average, how costly is each waiting request?<br/>
+      • <strong>Queued cost per priority class</strong> — are the expensive requests high-priority or low-priority?<br/>
+      • <strong>Recent arrival cost</strong> — is the incoming traffic getting cheaper or pricier?<br/>
+      • <strong>Rejected cost last step</strong> — how much useful work did we turn away?
+    </p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     SECTION 4: REWARD DESIGN
+════════════════════════════════════ -->
+<section id="reward">
+  <div class="section-label">Section 04</div>
+  <h2>The Hardest Part — Getting the Reward Right</h2>
+
+  <p>This section is the heart of the research. Defining what "good" means for the AI turned out to be the most critical challenge — and getting it wrong caused spectacular failure.</p>
+
+  <h3>Attempt 1: The Original Count-Based Reward</h3>
+  <p>The basic reward formula rewarded the AI for serving more requests and penalized it for latency, dropped requests, and especially dropped high-priority ones:</p>
+
+  <div class="formula">
+    reward = <span style="color:#90e0a0">+ throughput_score</span><br/>
+             <span style="color:#e09090">- latency_penalty</span><br/>
+             <span style="color:#e09090">- drop_rate_penalty</span><br/>
+             <span style="color:#e09090">- high_priority_drop_penalty  <span class="comment">← this was set too high (3.1×)</span></span><br/>
+             <span style="color:#e09090">- overload_indicator</span>
+  </div>
+
+  <p>The problem: the high-priority penalty was set to <code>3.1×</code> — extremely aggressive. The AI became so paranoid about ever dropping a high-priority request that it throttled everything down, serving almost nothing. A policy so conservative it defeated its own purpose.</p>
+
+  <div class="callout rust">
+    <div class="callout-label">⚠️ What Went Wrong</div>
+    <p>Imagine a student who loses 31 marks for every wrong answer, but only gains 10 for a right answer. They'd stop answering entirely rather than risk the penalty. The AI did the exact same thing.</p>
+  </div>
+
+  <p><strong>Fix:</strong> Reducing the high-priority penalty to <code>1.0×</code> immediately restored healthy behavior. Throughput jumped from 8.6 to 11.7 requests/step, and high-priority success improved from 83% to 90%.</p>
+
+  <h3>Attempt 2: Naive Cost-Aware Reward (The Collapse)</h3>
+  <p>When the project added cost awareness to the environment, the team naively kept the old "serve more requests = good" incentive and just added a small bonus for serving expensive requests:</p>
+
+  <div class="formula">
+    reward = <span style="color:#90e0a0">+ throughput_score (request count)</span><br/>
+             <span style="color:#90e0a0">+ small_cost_bonus</span>  &nbsp;&nbsp;<span class="comment">← the new addition</span><br/>
+             <span style="color:#e09090">- penalties...</span>
+  </div>
+
+  <p>This failed catastrophically. Here's why:</p>
+
+  <div class="example-box">
+    <div class="ex-title">Example — <span>Misaligned Incentives</span></div>
+    <p>The server now measures capacity in <em>cost units</em>, not request counts. But the AI is still being graded mainly on <em>request counts</em>. So when it admits many cheap low-cost requests (costing 1 unit each), it burns through the 24-unit budget serving 20+ requests... but those 20 cheap requests cause congestion, latency spikes, and score poorly on penalties.</p>
+    <br/>
+    <p>The AI discovered that the <em>safest</em> path to minimizing penalties was to stop admitting almost anything. By episode 180, it was serving barely 2 requests per step and had abandoned most of the budget entirely.</p>
+  </div>
+
+  <div class="gauge-row">
+    <div class="gauge-item">
+      <div class="gauge-label"><span class="name">Budget Utilization (Naive Reward)</span><span class="val">~26%</span></div>
+      <div class="gauge-track"><div class="gauge-fill rust" style="width:26%"></div></div>
+    </div>
+    <div class="gauge-item">
+      <div class="gauge-label"><span class="name">High-Priority Success (Naive Reward)</span><span class="val">~49–71%</span></div>
+      <div class="gauge-track"><div class="gauge-fill rust" style="width:60%"></div></div>
+    </div>
+    <div class="gauge-item">
+      <div class="gauge-label"><span class="name">Drop Rate (Naive Reward)</span><span class="val">~87%</span></div>
+      <div class="gauge-track"><div class="gauge-fill rust" style="width:87%"></div></div>
+    </div>
+  </div>
+
+  <h3>Attempt 3: Cost-Only Reward (The Fix)</h3>
+  <p>The solution was to <strong>replace</strong> the request-count objective entirely with a cost-served objective. The AI now got positive points only for how much <em>computational work</em> it facilitated — not how many requests it let in:</p>
+
+  <div class="formula">
+    reward = <span style="color:#90e0a0">+ served_cost_score  <span class="comment">← replaces request count</span></span><br/>
+             <span style="color:#e09090">- latency_penalty</span><br/>
+             <span style="color:#e09090">- drop_rate_penalty</span><br/>
+             <span style="color:#e09090">- high_priority_drop_penalty</span><br/>
+             <span style="color:#e09090">- overload_indicator</span>
+  </div>
+
+  <p>Now the AI's goal aligned perfectly with the environment's constraint. Serving a high-cost request felt as rewarding as serving several cheap ones. The policy stabilized immediately, and budget utilization climbed to near <strong>97–98%</strong> across most scenarios.</p>
+
+  <div class="gauge-row">
+    <div class="gauge-item">
+      <div class="gauge-label"><span class="name">Budget Utilization (Cost-Only Reward)</span><span class="val">~97%</span></div>
+      <div class="gauge-track"><div class="gauge-fill teal" style="width:97%"></div></div>
+    </div>
+    <div class="gauge-item">
+      <div class="gauge-label"><span class="name">High-Priority Success</span><span class="val">~88%</span></div>
+      <div class="gauge-track"><div class="gauge-fill green" style="width:88%"></div></div>
+    </div>
+    <div class="gauge-item">
+      <div class="gauge-label"><span class="name">Drop Rate</span><span class="val">~20–48%</span></div>
+      <div class="gauge-track"><div class="gauge-fill gold" style="width:34%"></div></div>
+    </div>
+  </div>
+
+  <div class="callout teal">
+    <div class="callout-label">The Central Lesson</div>
+    <p>In constrained RL systems, <strong>reward design is more important than algorithm choice</strong>. You can have the best AI algorithm in the world, but if you're rewarding the wrong thing, the agent will find a clever way to game your metric while solving the wrong problem.</p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     SECTION 5: RESULTS
+════════════════════════════════════ -->
+<section id="results">
+  <div class="section-label">Section 05</div>
+  <h2>How Well Did It Work?</h2>
+
+  <p>After training with the correct cost-only reward, the researchers compared their AI against two types of opponents: a simpler AI (count-blind PPO) and hand-crafted rule-based systems called "heuristics."</p>
+
+  <h3>Cost-Aware AI vs. Simple AI</h3>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Scenario</th>
+        <th>Metric</th>
+        <th>Simple AI</th>
+        <th>Cost-Aware AI</th>
+        <th>Winner</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td rowspan="2"><strong>High Load</strong></td>
+        <td>Requests served</td>
+        <td class="good">12.0 / step</td>
+        <td>7.8 / step</td>
+        <td>Simple AI</td>
+      </tr>
+      <tr>
+        <td>Budget used</td>
+        <td>100%</td>
+        <td class="good">97.5%</td>
+        <td>Both good</td>
+      </tr>
+      <tr>
+        <td rowspan="2"><strong>Bursty</strong></td>
+        <td>Total reward</td>
+        <td>124.5</td>
+        <td class="good">164.4</td>
+        <td>Cost-Aware AI</td>
+      </tr>
+      <tr>
+        <td>Budget used</td>
+        <td>84%</td>
+        <td class="good">96.6%</td>
+        <td>Cost-Aware AI</td>
+      </tr>
+      <tr>
+        <td rowspan="2"><strong>Oscillating</strong></td>
+        <td>Total reward</td>
+        <td>145.5</td>
+        <td class="good">157.8</td>
+        <td>Cost-Aware AI</td>
+      </tr>
+      <tr>
+        <td>Budget used</td>
+        <td>91%</td>
+        <td class="good">97.5%</td>
+        <td>Cost-Aware AI</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The cost-aware AI serves fewer raw requests — but that's intentional. It's not under-performing; it's choosing to serve <em>more computationally valuable</em> work within the same budget. Think of it like a chef who makes fewer, more complex dishes rather than churning out simple ones.</p>
+
+  <h3>How Does It Handle Surprises? (Out-of-Distribution Tests)</h3>
+  <p>The real test of any AI is what happens when conditions change in ways it wasn't trained on:</p>
+
+  <div class="scenario-grid">
+    <div class="sg-card">
+      <div class="sg-name" style="color: #2a8a50">✓ Cheap Flood</div>
+      <p>Hundreds of tiny, cheap requests flood in. The AI handled this well — cheap requests pack efficiently into the budget, and it learned to keep utilization high. <strong>Reward: +171</strong></p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name" style="color: var(--rust)">✗ Expensive Attack</div>
+      <p>A few extremely costly requests monopolize the budget. The AI collapsed badly — it never saw costs this high during training and didn't know how to ration them. <strong>Reward: −1203</strong></p>
+    </div>
+  </div>
+
+  <h3>vs. Hand-Crafted Heuristics</h3>
+  <p>The AI was also tested against human-designed rule systems that explicitly encode domain knowledge (e.g., "throttle more when queue cost exceeds X"). The honest conclusion: <strong>heuristics often won</strong>. The AI remained competitive, but didn't dominate.</p>
+
+  <div class="callout">
+    <div class="callout-label">Why Heuristics Are Hard to Beat</div>
+    <p>A hand-crafted rule like "if queued cost &gt; threshold, raise limit" took a human seconds to write but encodes years of domain insight for free. The AI had to discover this relationship from scratch through thousands of trial-and-error interactions — a much harder path.</p>
+  </div>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Scenario</th>
+        <th>Best Heuristic Reward</th>
+        <th>AI Reward</th>
+        <th>Verdict</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>High Load</td>
+        <td class="good">120.2 (CostAwarePriority)</td>
+        <td>102.0</td>
+        <td class="bad">Heuristic wins</td>
+      </tr>
+      <tr>
+        <td>Bursty</td>
+        <td class="good">167.1 (PriorityHeuristic)</td>
+        <td>164.4</td>
+        <td>Very close — AI competitive</td>
+      </tr>
+      <tr>
+        <td>Oscillating</td>
+        <td class="good">167.3 (PriorityHeuristic)</td>
+        <td>157.8</td>
+        <td class="bad">Heuristic wins</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+
+<!-- ══════════════════════════════════
+     SECTION 6: REAL WORLD SCENARIO
+════════════════════════════════════ -->
+<section id="realworld">
+  <div class="section-label">Section 06</div>
+  <h2>A Real-World Scenario Where This Matters</h2>
+
+  <div class="rw-scenario">
+    <div class="rw-tag">🏦 Case Study — Digital Banking Platform</div>
+    <h3>A Bank's API Gateway During Peak Trading Hours</h3>
+    <p>Imagine a major bank with a mobile app used by 5 million customers. Their backend API serves three very different types of requests — each with radically different costs and priorities.</p>
+
+    <div class="rw-flow">
+      <div class="rw-node">
+        <div class="n-label">🔴 High Priority · High Cost</div>
+        <div class="n-val">Payment transactions, loan approvals, fraud checks. Cost: 4–5 units. Cannot drop.</div>
+      </div>
+      <div class="rw-node">
+        <div class="n-label">🟡 Medium Priority · Medium Cost</div>
+        <div class="n-val">Account balance checks, transaction history. Cost: 2–3 units. Delay is acceptable.</div>
+      </div>
+      <div class="rw-node">
+        <div class="n-label">🟢 Low Priority · Low Cost</div>
+        <div class="n-val">Push notification delivery, analytics pings, background sync. Cost: 1 unit. Droppable.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>The Crisis: Month-End Processing Day</h3>
+  <p>On the last day of the month, salaries are credited simultaneously. 2 million customers open the app at the same time. The gateway receives 50,000 requests per second — 10× normal load. Without smart rate limiting:</p>
+
+  <div class="example-box">
+    <div class="ex-title">Without Smart Rate Limiting — <span>The Disaster</span></div>
+    <p>• A fixed limiter lets in everything up to a count of 12,000/sec regardless of cost<br/>
+    • Background analytics floods the queue first (thousands of cheap pings)<br/>
+    • Budget exhausted by low-value work<br/>
+    • Real payment confirmations queue for 40+ seconds<br/>
+    • Customers think transactions failed and retry, making things worse<br/>
+    • Server crashes under retry storm — the bank's busiest day becomes its worst outage</p>
+  </div>
+
+  <h3>With This Project's Cost-Aware PPO System</h3>
+
+  <div class="step-list">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-body">
+        <strong>AI observes the state</strong>
+        <p>Sees: queue growing fast, mean queued cost rising (expensive payment requests piling up), high-priority drop rate spiking. Budget utilization near 100%.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-body">
+        <strong>AI decreases the rate limit</strong>
+        <p>Reduces overall admissions to protect budget. Low-priority analytics pings get rejected first (they're designed to be retried later anyway).</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-body">
+        <strong>Budget now serves valuable work</strong>
+        <p>The 24-unit budget goes toward payment confirmations (cost 5 each → 4–5 per step) plus some balance checks. Payments process within 2 seconds. Customers are happy.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-body">
+        <strong>Load normalizes, AI adapts</strong>
+        <p>As the spike subsides, the AI gradually increases the rate limit again, allowing analytics and notifications to resume. No crash, no customer complaints.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout teal">
+    <div class="callout-label">The Bottom Line</div>
+    <p>In a production banking system, this approach could mean the difference between a seamless payday experience and a widely-reported outage. The AI optimizes for <em>computational value delivered</em>, not just a raw request count — which maps directly to business outcomes.</p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     SECTION 7: LIMITATIONS
+════════════════════════════════════ -->
+<section id="limitations">
+  <div class="section-label">Section 07</div>
+  <h2>Where This Work Falls Short</h2>
+
+  <p>Any honest research paper must acknowledge what it doesn't solve. Here are the key limitations — some discussed in the paper, some additional ones that apply broadly to this type of work:</p>
+
+  <div class="lim-grid">
+    <div class="lim-card">
+      <div class="lc-num">Limitation 01</div>
+      <strong>Poor Generalization to Unseen Cost Distributions</strong>
+      <p>The AI was trained on request costs ranging from 1–5. When the "expensive attack" scenario sent costs far outside this range, performance collapsed. It learned the scale of training, not the abstract concept of "cost packing."</p>
+    </div>
+    <div class="lim-card">
+      <div class="lc-num">Limitation 02</div>
+      <strong>Heuristics Remain Difficult to Beat</strong>
+      <p>Hand-crafted rules that directly encode domain knowledge (e.g., "throttle when queued cost exceeds a threshold") outperformed the learned policy in several stress scenarios. The AI paid a heavy sample-efficiency tax for discovering what an engineer could express in one line.</p>
+    </div>
+    <div class="lim-card">
+      <div class="lc-num">Limitation 03</div>
+      <strong>Discrete, Limited Action Space</strong>
+      <p>The AI can only choose between three actions: decrease, hold, or increase the rate limit in fixed steps of 2. A real system might benefit from continuous control (e.g., set limit to exactly 7.3) or per-class admission policies, not just one global knob.</p>
+    </div>
+    <div class="lim-card">
+      <div class="lc-num">Limitation 04</div>
+      <strong>No Online Adaptation</strong>
+      <p>Once trained, the AI's behavior is frozen. If traffic patterns change permanently (a new type of workload, a different cost distribution), the system can't adapt without being retrained from scratch. Real deployments need continuous learning.</p>
+    </div>
+    <div class="lim-card">
+      <div class="lc-num">Limitation 05</div>
+      <strong>Simulation vs. Reality Gap</strong>
+      <p>The entire system is trained in a simplified simulation. Real networks have packet-level jitter, TCP retransmissions, cascading failures, and hardware variability that the simulator ignores. The policy may behave differently in a real datacenter.</p>
+    </div>
+    <div class="lim-card">
+      <div class="lc-num">Limitation 06</div>
+      <strong>Single Gateway — No Coordination</strong>
+      <p>The research models one isolated gateway. In practice, large systems have hundreds of gateways, load balancers, and microservices. A policy that works for one node may create new bottlenecks elsewhere if it's not coordinated across the system.</p>
+    </div>
+    <div class="lim-card">
+      <div class="lc-num">Limitation 07</div>
+      <strong>No Safety Guarantees (SLOs)</strong>
+      <p>The AI optimizes a reward signal, but gives no hard guarantees. In production, systems must meet Service Level Objectives (SLOs) — e.g., "99.9% of payments complete in under 3 seconds." The current approach can't formally enforce such constraints.</p>
+    </div>
+    <div class="lim-card">
+      <div class="lc-num">Limitation 08</div>
+      <strong>Fine-Tuning Hurts Robustness</strong>
+      <p>When the researchers specialized the model on high-load scenarios, its performance on unusual attack scenarios got worse. This "catastrophic forgetting" is a known problem in neural networks — specializing for one thing often means forgetting something else.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">Suggested Future Directions</div>
+    <p>The paper itself suggests: online adaptation to new cost regimes, multi-gateway coordination, explicit safety constraint layers, richer feature engineering, and combining learned policies with structural priors about how expensive requests should be packed — rather than pure model-free RL.</p>
+  </div>
+</section>
+
+
+<!-- CLOSING -->
+<section style="border-bottom: none; padding-bottom: 60px;">
+  <div class="section-label">Summary</div>
+  <h2>Putting It All Together</h2>
+
+  <p>This project set out to answer one question: <em>can a learning AI manage API traffic better than static rules, and can it reason about the computational cost of each request it serves?</em></p>
+
+  <p>The answer is a <strong>qualified yes</strong>. The AI successfully learned to:</p>
+
+  <div class="step-list">
+    <div class="step">
+      <div class="step-num">✓</div>
+      <div class="step-body">
+        <strong>Use the budget efficiently</strong>
+        <p>Reaching ~97% budget utilization across standard scenarios — far above the naive approach that wasted 74% of available capacity.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">✓</div>
+      <div class="step-body">
+        <strong>Prioritize valuable work</strong>
+        <p>Maintaining ~88% high-priority success rates even under heavy load, by learning to protect important requests.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">✓</div>
+      <div class="step-body">
+        <strong>Generalize to some new situations</strong>
+        <p>Handling the cheap-flood scenario gracefully even though it was never seen during training.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">!</div>
+      <div class="step-body">
+        <strong>But with real limits</strong>
+        <p>Failing on adversarial cost attacks, unable to beat the best hand-crafted heuristics, and with no safety guarantees for production deployment.</p>
+      </div>
+    </div>
+  </div>
+
+  <p>The deepest lesson isn't about rate limiting — it's about AI design. <mark>What you reward the AI for matters more than which algorithm you use.</mark> A misaligned reward silently guides the AI toward the wrong solution, and the failure can look deceptively sensible until you examine it carefully. Getting the reward right is engineering as much as it is art.</p>
+</section>
+
+</div><!-- /page -->
+
+<footer>
+  Explainer based on: "Cost-Aware Adaptive Rate Limiting with PPO" · Harshal Rudra · May 2026<br/>
+  Written for a general audience. All technical claims are derived from the original paper.
+</footer>
+
+</body>
+</html>
