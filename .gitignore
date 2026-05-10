@@ -22,3 +22,4 @@ report.pdf
 *.htm
 !docs/report.pdf
 !docs/rl_rate_limiter_explainer.html
+!docs/rl_rate_limiter_explainer_.html
