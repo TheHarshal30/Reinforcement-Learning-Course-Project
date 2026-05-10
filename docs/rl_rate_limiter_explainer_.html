@@ -179,7 +179,7 @@
     <a href="#rl">The AI Brain</a>
     <a href="#cost">Cost Awareness</a>
     <a href="#reward">Reward Design</a>
-    <a href="#results">Results</a>
+    <a href="#results">Results</a><a href="#warmstart">Warm-Start</a><a href="#disturbance">Disturbance</a><a href="#disturbance">Disturbances</a>
     <a href="#realworld">Real World</a>
     <a href="#limitations">Limitations</a>
   </div>
@@ -483,6 +483,597 @@
 
 
 <!-- SECTION 6 -->
+
+<!-- SECTION 5B: WARM START -->
+<section id="warmstart">
+  <div class="section-label">Section 05b</div>
+  <h2>A Smarter Starting Point — Learning from the Expert</h2>
+
+  <p>At this point, the researchers had a working cost-aware PPO. It was competitive with heuristics but couldn't beat them. A natural question arose: <em>what if, instead of training from scratch, we first showed the AI how an expert behaves — and then let it improve from there?</em></p>
+
+  <p>This idea is called <strong>warm-starting</strong>, and it's one of the most practical tricks in AI training. Think of it like an apprenticeship: instead of a new chef inventing recipes from trial and error, you first have them shadow a Michelin-star chef, copy their techniques, and <em>then</em> start experimenting.</p>
+
+  <div class="callout teal">
+    <div class="callout-label">Key Term — Behavioral Cloning</div>
+    <p><strong>Behavioral Cloning (BC)</strong> is the "apprenticeship" step. The AI watches an expert (here, the <code>cost_aware_priority</code> heuristic) make decisions across 54,000 real situations, and learns to imitate those decisions. It's like copying from a textbook before taking the exam.</p>
+  </div>
+
+  <h3>Step 1 — Collect Expert Demonstrations</h3>
+  <p>The best heuristic — <code>CostAwarePriority</code> — was run across all standard traffic scenarios to generate 54,000 state-action pairs. These became the training data for imitation: "in this situation, the expert chose to <em>increase</em> the rate limit."</p>
+
+  <div class="example-box">
+    <div class="ex-title">Analogy — <span>The Apprentice Chef</span></div>
+    <p>The chef (heuristic) cooks 54,000 dishes across different scenarios — calm evenings, lunch rushes, VIP tables. The apprentice (PPO) watches every decision: which burner to turn up, when to slow down, what to prioritize. After observing enough examples, the apprentice can mimic ~53% of the chef's decisions correctly — not perfect, but a strong foundation.</p>
+  </div>
+
+  <h3>Step 2 — The Cloning Works… But PPO Breaks It</h3>
+  <p>Behavioral cloning produced a policy that matched the teacher on several scenarios. Then the researchers tried to improve it further with standard PPO fine-tuning. <strong>It immediately broke.</strong></p>
+
+  <div class="callout rust">
+    <div class="callout-label">⚠️ What Went Wrong</div>
+    <p>Naive PPO fine-tuning caused the policy to drift far away from the teacher and converge to a poor, high-latency regime. The carefully cloned behavior was destroyed within a few update steps. This is a known risk: RL updates can be aggressive enough to "forget" everything learned through imitation, chasing short-term reward spikes instead.</p>
+  </div>
+
+  <p>Think of it like this: the apprentice spent months learning the chef's techniques. Then on day one of independent cooking, they threw away the recipe book entirely and started improvising wildly — and made a mess.</p>
+
+  <h3>Step 3 — Behavior-Regularized PPO (The Fix)</h3>
+  <p>The solution was to add a <strong>teacher-anchoring term</strong> to the PPO objective. During every update, the AI received a bonus for choosing actions the teacher would have chosen — discouraging it from drifting too far from safe, proven behavior.</p>
+
+  <div class="formula">
+    PPO_loss = <span style="color:#90e0a0">standard_PPO_objective</span><br/>
+               <span style="color:#90e0a0">+ λ × log P(teacher_action | current_state)</span>  <span class="comment">← the anchor term</span>
+  </div>
+
+  <p>The parameter <code>λ</code> controls how strongly the AI is anchored to the teacher. Too low: drifts and collapses. Too high: can't learn anything new. The sweet spot found was <code>λ = 0.1</code>.</p>
+
+  <div class="example-box">
+    <div class="ex-title">Analogy — <span>The Supervised Apprentice</span></div>
+    <p>Now the chef doesn't just let the apprentice loose. They stand nearby and say: "For every dish, I'll score you on taste (reward) — but I'll also dock points if you do something I'd never do (teacher anchor)." The apprentice improves, but safely. They don't throw away everything they learned.</p>
+  </div>
+
+  <h3>The Results — Warm-Start Performance Table</h3>
+  <p>Here's what actually happened when all three policies were evaluated side-by-side: the original teacher heuristic, the cloned-only policy, and the behavior-regularized PPO.</p>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Scenario</th>
+        <th>Policy</th>
+        <th>Reward</th>
+        <th>Throughput</th>
+        <th>Latency</th>
+        <th>Drop Rate</th>
+        <th>HP Success</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td rowspan="3"><strong>High Load</strong></td>
+        <td>Teacher (CostAwarePriority)</td>
+        <td class="good">120.2</td>
+        <td>7.69</td>
+        <td>2.07</td>
+        <td>0.484</td>
+        <td>0.892</td>
+      </tr>
+      <tr>
+        <td>PPO-Cloned</td>
+        <td>108.2</td>
+        <td>7.33</td>
+        <td class="good">1.58</td>
+        <td>0.516</td>
+        <td class="good">0.897</td>
+      </tr>
+      <tr>
+        <td>PPO-Regularized (λ=0.1)</td>
+        <td>105.8</td>
+        <td>7.23</td>
+        <td class="good">1.52</td>
+        <td>0.520</td>
+        <td>0.893</td>
+      </tr>
+      <tr>
+        <td rowspan="3"><strong>Bursty</strong></td>
+        <td>Teacher</td>
+        <td class="good">162.8</td>
+        <td>7.14</td>
+        <td>1.48</td>
+        <td>0.242</td>
+        <td class="good">0.765</td>
+      </tr>
+      <tr>
+        <td>PPO-Cloned</td>
+        <td>142.4</td>
+        <td>7.38</td>
+        <td>2.48</td>
+        <td>0.273</td>
+        <td>0.750</td>
+      </tr>
+      <tr>
+        <td>PPO-Regularized (λ=0.1)</td>
+        <td>152.2</td>
+        <td class="good">7.72</td>
+        <td>2.99</td>
+        <td class="good">0.217</td>
+        <td>0.741</td>
+      </tr>
+      <tr>
+        <td rowspan="3"><strong>Oscillating</strong></td>
+        <td>Teacher</td>
+        <td class="good">165.5</td>
+        <td>7.56</td>
+        <td>1.71</td>
+        <td>0.283</td>
+        <td>0.800</td>
+      </tr>
+      <tr>
+        <td>PPO-Cloned</td>
+        <td>160.9</td>
+        <td>7.46</td>
+        <td class="good">1.65</td>
+        <td>0.288</td>
+        <td>0.795</td>
+      </tr>
+      <tr>
+        <td>PPO-Regularized (λ=0.1)</td>
+        <td>162.0</td>
+        <td class="good">7.62</td>
+        <td>2.07</td>
+        <td class="good">0.273</td>
+        <td class="good">0.802</td>
+      </tr>
+      <tr>
+        <td rowspan="3"><strong>Low Load</strong></td>
+        <td>Teacher</td>
+        <td>127.5</td>
+        <td>4.35</td>
+        <td>1.01</td>
+        <td>0.012</td>
+        <td>0.488</td>
+      </tr>
+      <tr>
+        <td>PPO-Cloned</td>
+        <td>129.1</td>
+        <td>4.40</td>
+        <td>1.02</td>
+        <td>0.010</td>
+        <td>0.481</td>
+      </tr>
+      <tr>
+        <td>PPO-Regularized (λ=0.1)</td>
+        <td class="good">131.9</td>
+        <td class="good">4.45</td>
+        <td>1.02</td>
+        <td class="good">0.001</td>
+        <td class="good">0.491</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Reading the Table — What Actually Improved?</h3>
+
+  <div class="scenario-grid">
+    <div class="sg-card">
+      <div class="sg-name" style="color: #2a8a50">✓ Low Load — PPO Wins!</div>
+      <p>The regularized PPO beats the teacher with reward 131.9 vs 127.5. On easy traffic, the AI found marginally better strategies than the hand-coded heuristic — the one scenario where it surpasses its teacher.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name" style="color: var(--teal)">↑ Bursty — Clear Improvement</div>
+      <p>Regularized PPO (152.2) significantly recovers from the cloned policy (142.4), closing most of the gap to the teacher (162.8). Drop rate improves from 0.273 to 0.217.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name" style="color: var(--teal)">↑ Oscillating — Competitive</div>
+      <p>Regularized PPO (162.0) nearly matches the teacher (165.5). Throughput and drop rate both improve over the cloned-only baseline.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name" style="color: var(--rust)">✗ High Load — Teacher Still Wins</div>
+      <p>The teacher (120.2) still beats both cloned (108.2) and regularized (105.8) on the hardest scenario. The latency is better, but reward trails. The teacher's explicit priority-cost rules work better under maximum pressure.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">The Goldilocks Problem with λ</div>
+    <p>Two stronger anchor values were also tested — <code>λ=0.15</code> and <code>λ=0.2</code>. Neither improved high-load performance, and both were worse than <code>λ=0.1</code>. The pattern: too weak an anchor lets the policy drift and collapse; too strong an anchor prevents the AI from learning anything new beyond what it copied. <code>λ=0.1</code> was the "just right" middle ground.</p>
+  </div>
+
+  <h3>The Second Big Lesson</h3>
+  <p>Warm-starting is a genuinely useful technique — but it comes with a catch. The combination of behavioral cloning + behavior-regularized PPO successfully prevents catastrophic forgetting and gives modest but real gains on bursty, oscillating, and low-load scenarios. However, it still didn't beat the teacher on the most critical high-load stress test. Heuristics encoded domain knowledge for free; the AI had to rediscover it through both imitation and interaction.</p>
+</section>
+
+
+<!-- SECTION 5C: TEMPORAL DISTURBANCE -->
+<section id="disturbance">
+  <div class="section-label">Section 05c</div>
+  <h2>Stress Testing — What Happens During a Sudden Shock?</h2>
+
+  <p>So far, all tests used <em>static</em> traffic scenarios — conditions that stayed consistent throughout an episode. But real API gateways don't get that luxury. They face sudden, transient shocks: a flash crowd of VIP requests, a server losing capacity mid-episode, an attacker flooding expensive queries for 30 seconds, or even random noise corrupting the control signals.</p>
+
+  <p>To test this, the researchers ran a special disturbance evaluation <strong>without retraining any policy</strong>. They took existing trained policies and subjected them to controlled mid-episode shocks — to see which policies could survive, adapt, and recover.</p>
+
+  <div class="callout teal">
+    <div class="callout-label">How the Test Was Structured</div>
+    <p>Each evaluation episode was split into three phases:<br/>
+    <strong>PRE (steps 0–39):</strong> Normal operation — a baseline to measure from.<br/>
+    <strong>SHOCK (steps 40–79):</strong> The disturbance hits — something changes dramatically.<br/>
+    <strong>POST (steps 80–119):</strong> Disturbance ends — can the system recover?</p>
+  </div>
+
+  <h3>The Four Disturbances Tested</h3>
+
+  <div class="scenario-grid">
+    <div class="sg-card">
+      <div class="sg-name" style="color: var(--rust)">⚡ Demand Surge</div>
+      <p>High-priority request volume multiplied by <strong>3×</strong> during the shock phase. Like a VIP event suddenly filling every lane of traffic with critical transactions.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name" style="color: var(--rust)">✂️ Budget Cut</div>
+      <p>Processing budget slashed from <strong>24 → 8 cost units/step</strong> during shock. Like a server losing two-thirds of its capacity mid-operation — a partial hardware failure.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name" style="color: var(--rust)">💰 Cost Shock</div>
+      <p>Request costs jump from the normal range (1–5) to a new, much higher range of <strong>8–12 units</strong>. Every request suddenly costs far more than during training — a completely unseen cost distribution.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name" style="color: var(--rust)">🎲 Action Corruption</div>
+      <p>30% of the AI's chosen actions are <strong>randomly replaced</strong> during shock — as if the control signal is experiencing noise or a bug. The AI intends to "hold" but sometimes "decreases" instead.</p>
+    </div>
+  </div>
+
+  <h3>How to Read the Results</h3>
+  <p>Three metrics capture what happens during and after each shock:</p>
+
+  <div class="example-box">
+    <div class="ex-title">Metric Definitions — <span>Robustness Scorecard</span></div>
+    <p><strong>Shock Reward:</strong> The average reward earned <em>during</em> the shock phase (steps 40–79). Higher is better — how well did the system cope while the disturbance was active?</p>
+    <br/>
+    <p><strong>Collapse Rate:</strong> Fraction of episodes where performance fell severely below the PRE baseline during the shock. Lower is better — a rate of 0.9 means the system collapsed in 90% of episodes.</p>
+    <br/>
+    <p><strong>Recovery Rate:</strong> Fraction of episodes where performance returned close to PRE levels after the shock ended. Higher is better — a rate of 0.0 means the system never recovered.</p>
+    <br/>
+    <p><strong>Robustness Score:</strong> A composite metric combining all three. Higher is better. Scores near 1.0 = excellent; near 0.0 = catastrophic.</p>
+  </div>
+
+  <h3>The Full Disturbance Results</h3>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Disturbance</th>
+        <th>Policy</th>
+        <th>Shock Reward</th>
+        <th>Collapse Rate ↓</th>
+        <th>Recovery Rate ↑</th>
+        <th>Robustness Score ↑</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td rowspan="3"><strong>⚡ Demand Surge</strong></td>
+        <td>PPO-CostOnly</td>
+        <td>0.495</td>
+        <td>0.250</td>
+        <td>0.138</td>
+        <td>0.549</td>
+      </tr>
+      <tr>
+        <td>PPO-WarmStart (λ=0.1)</td>
+        <td class="good">0.599</td>
+        <td>0.250</td>
+        <td class="good">0.312</td>
+        <td class="good">0.618</td>
+      </tr>
+      <tr>
+        <td>CostAwarePriority (Heuristic)</td>
+        <td class="good">0.653</td>
+        <td>0.263</td>
+        <td>0.238</td>
+        <td>0.599</td>
+      </tr>
+      <tr>
+        <td rowspan="3"><strong>✂️ Budget Cut</strong></td>
+        <td>PPO-CostOnly</td>
+        <td>−0.441</td>
+        <td>0.900</td>
+        <td>0.000</td>
+        <td>0.122</td>
+      </tr>
+      <tr>
+        <td>PPO-WarmStart (λ=0.1)</td>
+        <td class="good">−0.118</td>
+        <td>0.938</td>
+        <td>0.000</td>
+        <td class="good">0.141</td>
+      </tr>
+      <tr>
+        <td>CostAwarePriority (Heuristic)</td>
+        <td class="bad">−0.971</td>
+        <td class="good">0.887</td>
+        <td>0.000</td>
+        <td class="bad">0.071</td>
+      </tr>
+      <tr>
+        <td rowspan="3"><strong>💰 Cost Shock</strong></td>
+        <td>PPO-CostOnly</td>
+        <td>−0.318</td>
+        <td>0.875</td>
+        <td>0.000</td>
+        <td>0.087</td>
+      </tr>
+      <tr>
+        <td>PPO-WarmStart (λ=0.1)</td>
+        <td>−0.299</td>
+        <td>0.838</td>
+        <td>0.000</td>
+        <td>0.135</td>
+      </tr>
+      <tr>
+        <td>CostAwarePriority (Heuristic)</td>
+        <td class="good">−0.152</td>
+        <td class="good">0.787</td>
+        <td>0.000</td>
+        <td class="good">0.222</td>
+      </tr>
+      <tr>
+        <td rowspan="3"><strong>🎲 Action Corruption</strong></td>
+        <td>PPO-CostOnly</td>
+        <td class="good">0.685</td>
+        <td class="good">0.138</td>
+        <td>0.275</td>
+        <td class="good">0.665</td>
+      </tr>
+      <tr>
+        <td>PPO-WarmStart (λ=0.1)</td>
+        <td>0.682</td>
+        <td>0.225</td>
+        <td>0.312</td>
+        <td>0.631</td>
+      </tr>
+      <tr>
+        <td>CostAwarePriority (Heuristic)</td>
+        <td class="good">0.755</td>
+        <td class="good">0.075</td>
+        <td class="good">0.425</td>
+        <td class="good">0.749</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Breaking Down Each Disturbance</h3>
+
+  <div class="example-box">
+    <div class="ex-title">⚡ Demand Surge — <span>Warm-Start PPO Wins on Recovery</span></div>
+    <p>All three systems handled the 3× VIP surge reasonably well during the shock (reward 0.5–0.65). But the key difference is in <strong>recovery rate</strong> after the surge ended: warm-start PPO recovered 31% of episodes vs. the heuristic's 24% and cost-only PPO's 14%. The learned policy is more adaptable once things calm down — it doesn't stay stuck in the defensive posture the shock forced it into.</p>
+    <br/>
+    <p>The sharpest result: on the high-load scenario specifically, warm-start PPO's recovery rate was <strong>0.45 vs. the heuristic's 0.05</strong>. That's nine times better at bouncing back after a VIP flood — a genuinely meaningful real-world difference.</p>
+  </div>
+
+  <div class="example-box">
+    <div class="ex-title">✂️ Budget Cut — <span>Warm-Start PPO Copes Best, Heuristic Collapses</span></div>
+    <p>This is the most dramatic result in the entire disturbance evaluation. When the budget was cut from 24 to 8 units, the <strong>heuristic failed badly</strong> — shock reward of −0.971 vs. warm-start PPO's −0.118. The heuristic's built-in rules assumed normal budget levels and couldn't adapt when capacity suddenly became scarce. The learned policies, having encountered varied situations during training, coped far better with this novel constraint.</p>
+    <br/>
+    <p>However, all three systems had near-zero recovery rates — a budget cut is severe enough that no one fully recovers during the episode.</p>
+  </div>
+
+  <div class="example-box">
+    <div class="ex-title">💰 Cost Shock — <span>Heuristic Wins; AI Overfit to Training Costs</span></div>
+    <p>When request costs jumped to 8–12 units (far above the training range of 1–5), the heuristic was most resilient — collapse rate 0.79 vs. 0.84–0.88 for PPO variants. The heuristic's rules don't depend on the absolute scale of costs; they react to queue pressure and priority signals regardless. The AI policies, having learned the 1–5 cost distribution, were caught off-guard by the 8–12 range — exactly the distribution-shift failure highlighted earlier.</p>
+  </div>
+
+  <div class="example-box">
+    <div class="ex-title">🎲 Action Corruption — <span>Heuristic Most Noise-Tolerant</span></div>
+    <p>When 30% of control actions were randomly corrupted, the heuristic still achieved robustness score 0.749 and recovery rate 0.425 — better than both PPO variants. This makes intuitive sense: the heuristic's rules are simple and deterministic. Even with 30% random actions, the remaining 70% are executed correctly and follow clear logic. PPO's learned policy is more complex, so noise disrupts its decision-making more severely.</p>
+  </div>
+
+  <h3>The Key Takeaway — When Does Learning Help?</h3>
+
+  <div class="analogy">
+    <div class="analogy-side">
+      <div class="a-label">Where Learned Policies Win</div>
+      <div class="a-head">Transient Load & Capacity Shocks</div>
+      <p>Demand surges and budget cuts — situations requiring adaptive, flexible responses. Warm-start PPO recovers better and copes with capacity loss more gracefully because it learned generalizable admission strategies rather than fixed rules.</p>
+    </div>
+    <div class="analogy-side">
+      <div class="a-label">Where Heuristics Win</div>
+      <div class="a-head">Cost Distribution Shifts & Noise</div>
+      <p>Cost shocks and corrupted actions — situations where domain-encoded rules shine. The heuristic doesn't care what costs look like in absolute terms; its logic is scale-independent. And its simplicity makes it less fragile under random noise.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">The Third Big Lesson</div>
+    <p>Learned policies and hand-crafted heuristics fail in <em>different ways</em> under different disturbances. Rather than asking "which is better overall?", the more useful question is: "which disturbances am I most likely to face in production?" A hybrid approach — using heuristics as a safety net for cost shocks, and learned policies for capacity adaptation — would likely outperform either alone.</p>
+  </div>
+</section>
+
+
+<!-- SECTION 05c: TEMPORAL DISTURBANCE -->
+<section id="disturbance">
+  <div class="section-label">Section 05c</div>
+  <h2>Stress-Testing with Sudden Shocks — Temporal Disturbance Evaluation</h2>
+
+  <p>Everything tested so far used <em>static</em> scenarios — traffic patterns that stayed roughly consistent throughout an episode. But real API gateways don't live in a stable world. They face sudden, temporary crises: a celebrity tweets a link and traffic triples for 90 seconds, a server rack goes offline cutting capacity, or a configuration bug briefly corrupts control signals.</p>
+
+  <p>This final set of experiments asked: <strong>how well do the policies hold up when hit with a sudden shock mid-episode — and can they recover after the shock ends?</strong> Crucially, no policy was retrained for this. The same trained models were simply run through new adversarial conditions.</p>
+
+  <div class="callout teal">
+    <div class="callout-label">Experimental Design — The Three-Phase Episode</div>
+    <p>Each evaluation episode was split into three phases:<br/><br/>
+    <strong>PRE (steps 0–39):</strong> Normal traffic. Baseline performance.<br/>
+    <strong>SHOCK (steps 40–79):</strong> The disturbance hits. How bad does it get?<br/>
+    <strong>POST (steps 80–119):</strong> Normal traffic resumes. Can the policy recover?</p>
+  </div>
+
+  <h3>The Four Disturbances</h3>
+
+  <div class="scenario-grid">
+    <div class="sg-card">
+      <div class="sg-name">📈 Demand Surge</div>
+      <p>High-priority request volume multiplies by <strong>3×</strong> during SHOCK. Like a flash sale hitting only the most critical API endpoints simultaneously.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name">🔌 Budget Cut</div>
+      <p>Processing budget drops from <strong>24 → 8 cost units</strong> per step during SHOCK. Like a server rack going offline mid-operation, leaving only a third of normal capacity.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name">💥 Cost Shock</div>
+      <p>Request costs jump from the usual range of <strong>1–5</strong> to a new range of <strong>8–12</strong> during SHOCK. Requests that used to cost 3 units now cost 10 — completely outside anything seen in training.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name">🎲 Action Corruption</div>
+      <p>The AI's chosen action is <strong>randomly overridden 30% of the time</strong> during SHOCK — simulating a buggy actuator or noisy control channel. Like a driver whose steering wheel randomly jerks.</p>
+    </div>
+  </div>
+
+  <h3>How Results Are Measured</h3>
+  <p>Three new metrics capture shock resilience beyond just reward:</p>
+
+  <div class="example-box">
+    <div class="ex-title">New Metrics — <span>Robustness Measurement</span></div>
+    <p><strong>Shock Reward:</strong> Average reward during the SHOCK phase. Higher is better — it measures how much the policy degrades under pressure.</p><br/>
+    <p><strong>Collapse Rate:</strong> Fraction of episodes where performance fell significantly during SHOCK. A policy that collapses often is brittle — even if it recovers well.</p><br/>
+    <p><strong>Recovery Rate:</strong> Fraction of episodes where the POST phase returned to near-PRE performance. This is arguably the most important metric for real systems — you expect shocks, but you need recovery.</p><br/>
+    <p><strong>Robustness Score:</strong> A composite of all three — higher means the policy both survives the shock and bounces back.</p>
+  </div>
+
+  <h3>The Full Results Table</h3>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Disturbance</th>
+        <th>Policy</th>
+        <th>Shock Reward</th>
+        <th>Collapse Rate</th>
+        <th>Recovery Rate</th>
+        <th>Robustness Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td rowspan="3"><strong>📈 Demand Surge</strong></td>
+        <td>PPO-CostOnly</td>
+        <td>0.495</td>
+        <td>0.250</td>
+        <td>0.138</td>
+        <td>0.549</td>
+      </tr>
+      <tr>
+        <td><strong>PPO-WarmStart-Reg (λ=0.1)</strong></td>
+        <td class="good">0.599</td>
+        <td>0.250</td>
+        <td class="good">0.312</td>
+        <td class="good">0.618</td>
+      </tr>
+      <tr>
+        <td>CostAwarePriority (Heuristic)</td>
+        <td class="good">0.653</td>
+        <td>0.263</td>
+        <td>0.238</td>
+        <td>0.599</td>
+      </tr>
+      <tr>
+        <td rowspan="3"><strong>🔌 Budget Cut</strong></td>
+        <td>PPO-CostOnly</td>
+        <td>−0.441</td>
+        <td>0.900</td>
+        <td>0.000</td>
+        <td>0.122</td>
+      </tr>
+      <tr>
+        <td><strong>PPO-WarmStart-Reg (λ=0.1)</strong></td>
+        <td class="good">−0.118</td>
+        <td>0.938</td>
+        <td>0.000</td>
+        <td class="good">0.141</td>
+      </tr>
+      <tr>
+        <td>CostAwarePriority (Heuristic)</td>
+        <td class="bad">−0.971</td>
+        <td>0.887</td>
+        <td>0.000</td>
+        <td class="bad">0.071</td>
+      </tr>
+      <tr>
+        <td rowspan="3"><strong>💥 Cost Shock</strong></td>
+        <td>PPO-CostOnly</td>
+        <td>−0.318</td>
+        <td>0.875</td>
+        <td>0.000</td>
+        <td>0.087</td>
+      </tr>
+      <tr>
+        <td>PPO-WarmStart-Reg (λ=0.1)</td>
+        <td>−0.299</td>
+        <td>0.838</td>
+        <td>0.000</td>
+        <td>0.135</td>
+      </tr>
+      <tr>
+        <td><strong>CostAwarePriority (Heuristic)</strong></td>
+        <td class="good">−0.152</td>
+        <td class="good">0.787</td>
+        <td>0.000</td>
+        <td class="good">0.222</td>
+      </tr>
+      <tr>
+        <td rowspan="3"><strong>🎲 Action Corruption</strong></td>
+        <td>PPO-CostOnly</td>
+        <td>0.685</td>
+        <td class="good">0.138</td>
+        <td>0.275</td>
+        <td>0.665</td>
+      </tr>
+      <tr>
+        <td>PPO-WarmStart-Reg (λ=0.1)</td>
+        <td>0.682</td>
+        <td>0.225</td>
+        <td>0.312</td>
+        <td>0.631</td>
+      </tr>
+      <tr>
+        <td><strong>CostAwarePriority (Heuristic)</strong></td>
+        <td class="good">0.755</td>
+        <td class="good">0.075</td>
+        <td class="good">0.425</td>
+        <td class="good">0.749</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Reading the Results — Who Wins Where, and Why</h3>
+
+  <div class="scenario-grid">
+    <div class="sg-card">
+      <div class="sg-name" style="color: #2a8a50">✓ Demand Surge — Warm-Start Wins on Recovery</div>
+      <p>The warm-started PPO achieves a <strong>recovery rate of 0.312</strong> vs. the heuristic's 0.238 — 31% vs. 24%. The standout result: on the high-load sub-scenario, warm-start PPO recovered in <strong>45% of episodes</strong> vs. just 5% for the heuristic. The AI learned a more flexible response to transient overloads.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name" style="color: #2a8a50">✓ Budget Cut — PPO Adapts Better</div>
+      <p>When capacity suddenly drops to 1/3 of normal, the heuristic crumbles (shock reward −0.971, robustness 0.071). Warm-start PPO is far more resilient (shock reward −0.118, robustness 0.141). The learned policy seems to find a lower gear more naturally than the rule-based system.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name" style="color: var(--rust)">✗ Cost Shock — Heuristic Wins</div>
+      <p>When request costs suddenly jump to 8–12 (far outside training range), the heuristic (robustness 0.222) still outperforms both PPO variants (0.087 and 0.135). Its explicit priority-cost logic degrades more gracefully than the AI, which has no concept of costs this large.</p>
+    </div>
+    <div class="sg-card">
+      <div class="sg-name" style="color: var(--rust)">✗ Action Corruption — Heuristic Wins</div>
+      <p>With 30% of actions randomly overridden, the heuristic (robustness 0.749, recovery 0.425) handles chaos far better than any PPO variant. A deterministic rule-based system degrades predictably under noise; the learned policy is less stable when its outputs are randomly disrupted.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">The Informative Split — What It Tells Us</div>
+    <p>The results divide cleanly: <strong>learned policies are better at adapting to transient load and capacity changes</strong> (demand surge, budget cut), while <strong>heuristics are better at resisting distributional shocks and noise</strong> (cost shock, action corruption). This makes intuitive sense — the AI learned how to respond to pressure patterns it understood, while the heuristic's rigid rules are ironically more noise-resistant precisely because they don't try to interpret ambiguous signals.</p>
+  </div>
+
+  <div class="example-box">
+    <div class="ex-title">The Standout Finding — <span>Demand Surge on High Load</span></div>
+    <p>The clearest win for the warm-started PPO: when hit with a 3× demand surge during a high-load episode, it recovered in <strong>45% of episodes</strong> once the surge ended. The teacher heuristic — which outperforms PPO on normal high-load metrics — recovered in only <strong>5% of episodes</strong>.</p>
+    <br/>
+    <p>This is remarkable: the heuristic has better rules for normal operation, but the AI has learned something the heuristic hasn't — how to return to stability after being knocked off-course. Think of it as the difference between a champion sprinter (fast in a straight line) and a trained martial artist (better at recovering from being pushed).</p>
+  </div>
+</section>
+
 <section id="realworld">
   <div class="section-label">Section 06</div>
   <h2>A Real-World Scenario Where This Matters</h2>
@@ -617,7 +1208,7 @@
   <div class="section-label">Summary</div>
   <h2>Putting It All Together</h2>
   <p>This project set out to answer: <em>can a learning AI manage API traffic better than static rules, and can it reason about the computational cost of each request?</em></p>
-  <p>The answer is a <strong>qualified yes</strong>. The AI successfully learned to:</p>
+  <p>The answer is a <strong>qualified yes</strong>, with a bonus finding from the warm-start experiments. The AI successfully learned to:</p>
   <div class="step-list">
     <div class="step">
       <div class="step-num">✓</div>
@@ -638,6 +1229,13 @@
       <div class="step-body">
         <strong>Generalize to some new situations</strong>
         <p>Handling the cheap-flood OOD scenario gracefully — matching heuristics it was never designed to compete with.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">✓</div>
+      <div class="step-body">
+        <strong>Benefit from expert guidance via warm-starting</strong>
+        <p>Behavioral cloning + behavior-regularized PPO prevented catastrophic forgetting and gave real gains on bursty, oscillating, and low-load — even beating the teacher on low load.</p>
       </div>
     </div>
     <div class="step">
