@@ -19,6 +19,7 @@ cost_reward_screen/
 cost_aware_finetune_run/
 azure_trace_artifacts/raw/
 azure_trace_artifacts/extracted/
+disturbance_eval_smoke/
 report.pdf
 *.html
 *.htm

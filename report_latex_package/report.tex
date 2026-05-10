@@ -660,6 +660,54 @@ Scenario & Policy & Reward & Throughput & Latency & Drop Rate & HP Success & Bud
 }
 \end{table}
 
+\subsection{Temporal Disturbance Evaluation}
+Static OOD shifts test robustness to a different but fixed distribution. Real API gateways also face transient shocks: a sudden high-priority flood, temporary capacity loss, an expensive-request burst, or actuator noise that corrupts control actions. To evaluate this, a disturbance-only extension was added without retraining any policy. Each evaluation episode was split into three phases: PRE ($0$--$39$), SHOCK ($40$--$79$), and POST ($80$--$119$). Metrics were recorded per phase and summarized by collapse rate, recovery rate, and a simple robustness score.
+
+Four disturbances were tested:
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Demand surge}: high-priority demand multiplied by $3$ during SHOCK.
+    \item \textbf{Budget cut}: processing budget reduced from $24$ to $8$ during SHOCK.
+    \item \textbf{Cost shock}: request costs changed to $\mathcal{U}(8,12)$ during SHOCK.
+    \item \textbf{Action corruption}: the chosen action was replaced by a random action with probability $0.30$ during SHOCK.
+\end{itemize}
+
+Table~\ref{tab:disturbance_eval} reports averages aggregated across the standard scenarios. The behavior-regularized warm-start PPO was strongest under \texttt{demand\_surge} and \texttt{budget\_cut}, while the heuristic remained strongest under \texttt{cost\_shock} and \texttt{action\_corruption}. This split is informative: learned adaptation helped most when the system had to respond to transient load or temporary capacity loss, whereas the hand-crafted heuristic retained an advantage when shock behavior aligned closely with its built-in priority logic.
+
+\begin{table}[H]
+\centering
+\caption{Aggregate disturbance robustness across standard scenarios. Shock reward, collapse rate, and recovery rate are averaged across \texttt{low\_load}, \texttt{high\_load}, \texttt{bursty}, and \texttt{oscillating}. The warm-started PPO is best under demand surge and budget cut, while the heuristic remains strongest under cost shock and action corruption.}
+\label{tab:disturbance_eval}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{llcccc}
+\toprule
+Disturbance & Policy & Shock Reward & Collapse Rate & Recovery Rate & Robustness Score \\
+\midrule
+\multirow{3}{*}{demand\_surge}
+& PPO-CostOnly & $0.495$ & $0.250$ & $0.138$ & $0.549$ \\
+& PPO-WarmStart-Reg ($\lambda=0.1$) & $0.599$ & $0.250$ & $0.312$ & $0.618$ \\
+& CostAwarePriority & $0.653$ & $0.263$ & $0.238$ & $0.599$ \\
+\midrule
+\multirow{3}{*}{budget\_cut}
+& PPO-CostOnly & $-0.441$ & $0.900$ & $0.000$ & $0.122$ \\
+& PPO-WarmStart-Reg ($\lambda=0.1$) & $-0.118$ & $0.938$ & $0.000$ & $0.141$ \\
+& CostAwarePriority & $-0.971$ & $0.887$ & $0.000$ & $0.071$ \\
+\midrule
+\multirow{3}{*}{cost\_shock}
+& PPO-CostOnly & $-0.318$ & $0.875$ & $0.000$ & $0.087$ \\
+& PPO-WarmStart-Reg ($\lambda=0.1$) & $-0.299$ & $0.838$ & $0.000$ & $0.135$ \\
+& CostAwarePriority & $-0.152$ & $0.787$ & $0.000$ & $0.222$ \\
+\midrule
+\multirow{3}{*}{action\_corruption}
+& PPO-CostOnly & $0.685$ & $0.138$ & $0.275$ & $0.665$ \\
+& PPO-WarmStart-Reg ($\lambda=0.1$) & $0.682$ & $0.225$ & $0.312$ & $0.631$ \\
+& CostAwarePriority & $0.755$ & $0.075$ & $0.425$ & $0.749$ \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+The clearest positive result came from the \texttt{demand\_surge} disturbance on \texttt{high\_load}. There, the warm-started PPO achieved a much higher recovery rate than the teacher heuristic ($0.45$ vs.\ $0.05$) after the shock ended. This suggests that behavior-regularized PPO learned a more recoverable policy under transient overload, even though the heuristic still had slightly stronger average shock reward.
+
 \section{Discussion}
 The experiments highlight one central lesson: reward alignment matters more than algorithm choice in this environment. The naive cost-aware reward collapsed because the agent was constrained by cost but rewarded mainly by request count. That created severe credit-assignment noise. Serving a few cheap requests could look superficially good under one part of the reward while still causing congestion penalties elsewhere, and the agent eventually converged to a degenerate low-admission strategy. Once the positive signal was changed to processed cost, the optimization target became congruent with the environment's real constraint. Stability improved immediately.
 
@@ -670,6 +718,8 @@ The second lesson is that heuristics remain strong in structured domains. The co
 The OOD results sharpen this point. The cost-aware PPO generalized well to \texttt{cheap\_flood}, where many inexpensive requests are easy to pack into the budget. But it failed badly on \texttt{expensive\_attack}, where a few large-cost requests distort the training distribution. The policy trained on uniform costs from $1$ to $5$ did not learn a sufficiently abstract notion of cost packing. Instead, it overfit to the scale seen in training. This is a classic distribution-shift failure of pure model-free RL.
 
 The Azure-calibrated transfer test refines that observation. When evaluated under a production-derived cost PMF, all policies degraded substantially because the distribution was far more skewed than the synthetic uniform costs used during training. However, the behavior-regularized warm-start PPO was more robust than the plain cost-only PPO across all four scenarios and even achieved the best reward on Azure-calibrated \texttt{high\_load} and \texttt{oscillating}. This suggests that heuristic imitation does not just stabilize PPO training; it also provides a better inductive bias under realistic cost shifts.
+
+The disturbance evaluation adds one more nuance. Static distribution shift and temporal resilience are not the same property. The warm-started PPO was not always best under static Azure transfer, but it was strongest under transient demand surge and temporary budget loss, and it recovered from high-load surge more reliably than the heuristic. By contrast, the heuristic remained strongest under cost shock and action corruption. This suggests that different control mechanisms dominate under different operational hazards: learned adaptation helped with temporal stress, while explicit heuristic structure still helped with abrupt control noise and very expensive traffic.
 
 There is also a genuine systems trade-off in the final cost-aware policy. It serves fewer requests than the count-blind PPO, but it uses almost all of the budget and explicitly optimizes useful computational work rather than raw admissions. In a production setting where compute is the real bottleneck, this behavior may be preferable. That is, lower request throughput is not automatically worse if the served workload is more computationally valuable.
 
@@ -684,6 +734,8 @@ The warm-start extension refines the second conclusion: heuristic demonstrations
 
 The Azure integration adds a final practical conclusion: evaluating only on synthetic cost distributions can overstate robustness. A production-derived cost PMF revealed a much harsher operating regime, but also showed that the regularized warm-start PPO transferred better than the plain cost-only agent.
 
+The disturbance evaluation adds a final resilience conclusion: transient shocks expose a different kind of robustness than static OOD shifts. In this setting, behavior-regularized warm-start PPO gave the best response to demand surge and budget loss, while the heuristic remained superior under cost shock and action corruption.
+
 Future work should explore policies that adapt online to new cost regimes, integrate more realistic resource accounting, coordinate across multiple gateways, and impose explicit safety constraints for service-level objectives. More broadly, the project suggests that the most promising route is not blindly scaling PPO, but combining learning with stronger structural priors about how expensive requests should be packed under limited budget.
 
 \appendix
@@ -696,6 +748,7 @@ The project was implemented as an extension of the existing reinforcement-learni
     \item fine-tuning checkpoints and evaluation files,
     \item warm-start behavioral cloning and regularized PPO runs,
     \item Azure trace cost-profile extraction and transfer-evaluation outputs,
+    \item temporal disturbance robustness evaluation outputs,
     \item narrative documents explaining experimental outcomes.
 \end{itemize}
 

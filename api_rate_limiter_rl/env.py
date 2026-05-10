@@ -6,7 +6,7 @@ from typing import Deque, Dict, List, Tuple
 import math
 import random
 
-from .config import EnvConfig, ScenarioConfig
+from .config import DisturbanceConfig, EnvConfig, ScenarioConfig
 from .utils import clamp, sample_categorical, sample_poisson, sliding_mean
 
 
@@ -73,6 +73,28 @@ class RateLimitEnv:
             rate *= self.scenario.burst_multiplier
         return max(0.1, rate)
 
+    def _active_disturbance(self) -> DisturbanceConfig | None:
+        disturbance = self.config.disturbance
+        if disturbance is None:
+            return None
+        if disturbance.start_step <= self.time_step <= disturbance.end_step:
+            return disturbance
+        return None
+
+    def _service_budget_for_step(self) -> float:
+        disturbance = self._active_disturbance()
+        if disturbance is not None and disturbance.type == "budget_cut":
+            return max(1.0, disturbance.intensity)
+        return self.config.service_budget_per_step
+
+    def maybe_corrupt_action(self, action: int) -> int:
+        disturbance = self._active_disturbance()
+        if disturbance is None or disturbance.type != "action_corruption":
+            return action
+        if self.rng.random() < disturbance.intensity:
+            return self.rng.choice([self.action_decrease, self.action_hold, self.action_increase])
+        return action
+
     def _sample_priorities(self, count: int) -> List[int]:
         probs = self.scenario.priority_probs
         return [sample_categorical(probs, self.rng) for _ in range(count)]
@@ -82,6 +104,10 @@ class RateLimitEnv:
         return list(retry_requests)
 
     def _sample_request_cost(self, priority: int) -> float:
+        disturbance = self._active_disturbance()
+        if disturbance is not None and disturbance.type == "cost_shock":
+            low, high = disturbance.cost_range
+            return self.rng.uniform(low, high)
         if (
             self.config.use_azure_cost
             and self.config.azure_cost_values
@@ -182,6 +208,7 @@ class RateLimitEnv:
                 self.config.max_rate_limit,
             )
 
+        disturbance = self._active_disturbance()
         incoming_rate = self._traffic_rate(self.time_step)
         incoming_count = sample_poisson(incoming_rate, self.rng)
         arrivals = [
@@ -192,6 +219,21 @@ class RateLimitEnv:
             )
             for p in self._sample_priorities(incoming_count)
         ]
+        if disturbance is not None and disturbance.type == "demand_surge":
+            extra_high = sample_poisson(
+                incoming_rate * max(0.0, disturbance.intensity - 1.0) * self.scenario.priority_probs[PRIORITY_HIGH],
+                self.rng,
+            )
+            arrivals.extend(
+                [
+                    Request(
+                        created_step=self.time_step,
+                        priority=PRIORITY_HIGH,
+                        service_cost=self._sample_request_cost(PRIORITY_HIGH) if self.config.use_request_costs else 1.0,
+                    )
+                    for _ in range(extra_high)
+                ]
+            )
 
         retry_arrivals = self._scheduled_retries()
         arrivals.extend(retry_arrivals)
@@ -231,8 +273,9 @@ class RateLimitEnv:
             list(self.queue),
             key=lambda req: (-req.priority, req.created_step, req.retry_count),
         )
+        service_budget_now = self._service_budget_for_step()
         if self.config.use_request_costs:
-            remaining_budget = self.config.service_budget_per_step
+            remaining_budget = service_budget_now
             served = []
             for req in service_candidates:
                 if req.service_cost <= remaining_budget:
@@ -263,7 +306,7 @@ class RateLimitEnv:
 
         throughput = len(served)
         budget_utilization = (
-            served_total_cost / max(1.0, self.config.service_budget_per_step)
+            served_total_cost / max(1.0, service_budget_now)
             if self.config.use_request_costs
             else throughput / max(1.0, self.config.service_capacity)
         )
@@ -282,7 +325,7 @@ class RateLimitEnv:
         reward_overload = -self.config.reward_overload_weight * overload
         reward_cost_processed = (
             self.config.reward_cost_processed_weight
-            * (served_total_cost / max(1.0, self.config.service_budget_per_step))
+            * (served_total_cost / max(1.0, service_budget_now))
         )
         reward_budget_utilization = self.config.reward_budget_utilization_weight * budget_utilization
         reward = (
@@ -319,6 +362,9 @@ class RateLimitEnv:
             "queue_total_cost": queue_total_cost,
             "mean_queue_cost": queue_total_cost / max(1, len(self.queue)),
             "mean_arrival_cost": arrival_total_cost / max(1, len(arrivals)),
+            "disturbance_type": disturbance.type if disturbance is not None else "none",
+            "disturbance_active": disturbance is not None,
+            "service_budget_now": service_budget_now,
             "average_latency": average_latency,
             "drop_rate": drop_rate,
             "high_priority_success_rate": high_success_rate,

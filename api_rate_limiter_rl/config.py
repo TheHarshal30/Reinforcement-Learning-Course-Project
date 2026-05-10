@@ -3,6 +3,15 @@ from typing import Dict, Tuple
 
 
 @dataclass(frozen=True)
+class DisturbanceConfig:
+    type: str
+    start_step: int
+    end_step: int
+    intensity: float = 1.0
+    cost_range: Tuple[float, float] = (8.0, 12.0)
+
+
+@dataclass(frozen=True)
 class ScenarioConfig:
     name: str
     base_rate: float
@@ -50,6 +59,7 @@ class EnvConfig:
     include_arrival_trend: bool = False
     include_time_phase: bool = False
     include_rejected_cost: bool = False
+    disturbance: DisturbanceConfig | None = None
     seed: int = 7
 
 

@@ -79,6 +79,7 @@ def rollout_episode(env: RateLimitEnv, policy, deterministic: bool = False):
             action = 1
             logp = 0.0
             value = 0.0
+        action = env.maybe_corrupt_action(action)
         next_state, reward, done, info = env.step(action)
         if not isinstance(policy, PPOAgent) and hasattr(policy, "observe"):
             policy.observe(info)
