@@ -37,6 +37,10 @@
 \begin{document}
 \maketitle
 
+\begin{center}
+\href{https://github.com/TheHarshal30/Reinforcement-Learning-Course-Project}{Github Repo}
+\end{center}
+
 \begin{abstract}
 Modern API gateways must regulate admission under limited capacity while balancing three competing objectives: sustaining throughput, keeping latency low, and protecting high-priority traffic. This project begins from a class-based reinforcement learning rate limiter trained with Proximal Policy Optimization (PPO), and extends it to a cost-aware admission-control setting in which each request carries a computational service cost and the server capacity is modeled as a per-step processing budget rather than a fixed request count. The central technical challenge was reward alignment. A naive cost-aware reward, which retained request-count throughput and added only a small processed-cost bonus, caused the policy to collapse into an under-serving regime. Replacing the throughput term with a cost-served objective stabilized learning and produced a high-utilisation policy that used almost all available budget. Across standard traffic scenarios, the resulting cost-aware PPO traded raw request throughput for substantially higher cost efficiency and remained competitive with strong hand-crafted baselines. It generalized well to a cheap-flood out-of-distribution scenario, but still failed under an expensive-attack shift in which a few extremely costly requests monopolized capacity. The overall lesson is that reward engineering is decisive in constrained RL systems, and domain-aware heuristics remain difficult baselines to beat.
 \end{abstract}
@@ -751,8 +755,6 @@ The project was implemented as an extension of the existing reinforcement-learni
     \item temporal disturbance robustness evaluation outputs,
     \item narrative documents explaining experimental outcomes.
 \end{itemize}
-
-Repository: \url{https://github.com/TheHarshal30/Reinforcement-Learning-Course-Project}
 
 The important implementation principle was minimal refactoring: the PPO pipeline, plotting functions, and evaluation scripts were preserved wherever possible, and only the environment, reward, and heuristic logic were extended for cost-awareness.
 
